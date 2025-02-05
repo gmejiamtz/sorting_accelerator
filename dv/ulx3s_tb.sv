@@ -16,7 +16,7 @@ initial begin
     ulx3s_runner.reset();
     ulx3s_runner.set_a_i(1'b1);
     ulx3s_runner.set_c_i(1'b1);
-    ulx3s_runner.wait_n_cycles(1);
+    ulx3s_runner.wait_n_cycles(50);
 
     $display( "End simulation." );
     $finish;

@@ -14,7 +14,7 @@ SV2V_ARGS := $(shell \
  python3 misc/convert_filelist.py sv2v rtl/rtl.f \
 )
 
-.PHONY: lint sim gls icestorm_icebreaker_gls icestorm_icebreaker_program icestorm_icebreaker_flash clean
+.PHONY: lint sim gls trellis_ulx3s_gls trellis_ulx3s_program trellis_ulx3s_flash clean
 
 lint:
 	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top top
@@ -56,10 +56,10 @@ synth/trellis_ulx3s/build/ulx3s.config: synth/trellis_ulx3s/build/synth.json syn
 %.bit: %.config
 	ecppack $< $@
 
-icestorm_icebreaker_program: synth/trellis_ulx3s/build/icebreaker.bit
+trellis_ulx3s_program: synth/trellis_ulx3s/build/ulx3s.bit
 	sudo $(shell which fujprog) $<
 
-icestorm_icebreaker_flash: synth/icestorm_icebreaker/build/icebreaker.bit
+trellis_ulx3s_flash: synth/trellis_ulx3s/build/ulx3s.bit
 	sudo $(shell which fujprog) $<
 
 clean:
