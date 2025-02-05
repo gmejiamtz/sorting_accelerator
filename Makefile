@@ -17,7 +17,7 @@ SV2V_ARGS := $(shell \
 .PHONY: lint sim gls icestorm_icebreaker_gls icestorm_icebreaker_program icestorm_icebreaker_flash clean
 
 lint:
-	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top blinky
+	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top top
 
 sim:
 	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f rtl/rtl.f -f dv/pre_synth.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
@@ -46,6 +46,7 @@ synth/trellis_ulx3s/build/synth.v synth/trellis_ulx3s/build/synth.json: synth/bu
 synth/trellis_ulx3s/build/ulx3s.config: synth/trellis_ulx3s/build/synth.json synth/trellis_ulx3s/nextpnr.py synth/trellis_ulx3s/nextpnr_ecp5.lpf
 	nextpnr-ecp5 --12k --json synth/trellis_ulx3s/build/synth.json \
 	 --pre-pack synth/trellis_ulx3s/nextpnr.py \
+	 --package CABGA381 \
 	 --lpf synth/trellis_ulx3s/nextpnr_ecp5.lpf \
 	 --report synth/trellis_ulx3s/build/timing.json \
 	 --placed-svg synth/trellis_ulx3s/build/placement.svg \

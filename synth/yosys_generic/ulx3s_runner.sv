@@ -18,18 +18,10 @@ initial begin
     end
 end
 
-top uut (
-    .clk_i(clk_i),
-    .reset_i(reset_i),
-    .a_i(a_i),
-    .b_i(b_i),
-    .c_i(c_i),
-    .d_o(d_o)
-);
+ulx3s_sim ulx3s_sim (.*);
 
 always @(posedge d_o) $info("Register on");
 always @(negedge d_o) $info("Register off");
-
 
 task automatic reset;
     reset_i <= 1;

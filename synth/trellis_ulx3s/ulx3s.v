@@ -19,13 +19,13 @@ EHXPLLL #(
         .OUTDIVIDER_MUXB("DIVB"),
         .OUTDIVIDER_MUXC("DIVC"),
         .OUTDIVIDER_MUXD("DIVD"),
-        .CLKI_DIV(7),               //Refclk divisor
+        .CLKI_DIV(1),               //Refclk divisor
         .CLKOP_ENABLE("ENABLED"),
-        .CLKOP_DIV(14),              //clkout0 divisor
+        .CLKOP_DIV(12),              //clkout0 divisor
         .CLKOP_CPHASE(2),
         .CLKOP_FPHASE(0),
         .FEEDBK_PATH("CLKOP"),
-        .CLKFB_DIV(15)   //Feedback Divisor
+        .CLKFB_DIV(2)   //Feedback Divisor
     ) pll (
         .RST(1'b0),
         .STDBY(1'b0),
