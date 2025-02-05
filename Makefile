@@ -2,15 +2,18 @@
 TOP := ulx3s_tb
 
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
+export ALEXFORENCICH_UART_DIR := $(abspath third_party/alexforencich_uart)
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
 
 RTL := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
+ ALEXFORENCICH_UART_DIR=$(ALEXFORENCICH_UART_DIR) \
  python3 misc/convert_filelist.py Makefile rtl/rtl.f \
 )
 
 SV2V_ARGS := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
+ ALEXFORENCICH_UART_DIR=$(ALEXFORENCICH_UART_DIR) \
  python3 misc/convert_filelist.py sv2v rtl/rtl.f \
 )
 
