@@ -1,10 +1,10 @@
 
-module blinky_tb
+module ulx3s_tb
     import config_pkg::*;
     import dv_pkg::*;
     ;
 
-blinky_runner blinky_runner ();
+ulx3s_runner ulx3s_runner ();
 
 initial begin
     $dumpfile( "dump.fst" );
@@ -13,12 +13,10 @@ initial begin
     $urandom(100);
     $timeformat( -3, 3, "ms", 0);
 
-    blinky_runner.reset();
-
-    repeat(4) begin
-        blinky_runner.wait_for_on();
-        blinky_runner.wait_for_off();
-    end
+    ulx3s_runner.reset();
+    ulx3s_runner.set_a_i(1'b1);
+    ulx3s_runner.set_c_i(1'b1);
+    ulx3s_runner.wait_n_cycles(1);
 
     $display( "End simulation." );
     $finish;

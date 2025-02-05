@@ -1,2 +1,2 @@
 
-dv/blinky_runner.sv
+dv/ulx3s_runner.sv
