@@ -1,5 +1,5 @@
 
-TOP := blinky_tb
+TOP := ulx3s_tb
 
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
@@ -35,41 +35,31 @@ synth/yosys_generic/build/synth.v: synth/build/rtl.sv2v.v synth/yosys_generic/yo
 	mkdir -p $(dir $@)
 	yosys -p 'tcl synth/yosys_generic/yosys.tcl synth/build/rtl.sv2v.v' -l synth/yosys_generic/build/yosys.log
 
-icestorm_icebreaker_gls: synth/icestorm_icebreaker/build/synth.v
-	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f synth/icestorm_icebreaker/gls.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
+trellis_ulx3s_gls: synth/trellis_ulx3s/build/synth.v
+	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f synth/trellis_ulx3s/gls.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
 	./${TOP}_$@_dir/V${TOP} +verilator+rand+reset+2
 
-synth/icestorm_icebreaker/build/synth.v synth/icestorm_icebreaker/build/synth.json: synth/build/rtl.sv2v.v synth/icestorm_icebreaker/icebreaker.v synth/icestorm_icebreaker/yosys.tcl
+synth/trellis_ulx3s/build/synth.v synth/trellis_ulx3s/build/synth.json: synth/build/rtl.sv2v.v synth/trellis_ulx3s/ulx3s.v synth/trellis_ulx3s/yosys.tcl
 	mkdir -p $(dir $@)
-	yosys -p 'tcl synth/icestorm_icebreaker/yosys.tcl' -l synth/icestorm_icebreaker/build/yosys.log
+	yosys -p 'tcl synth/trellis_ulx3s/yosys.tcl' -l synth/trellis_ulx3s/build/yosys.log
 
-synth/icestorm_icebreaker/build/icebreaker.asc: synth/icestorm_icebreaker/build/synth.json synth/icestorm_icebreaker/nextpnr.py synth/icestorm_icebreaker/netpnr.pcf
-	nextpnr-ice40 \
-	 --json synth/icestorm_icebreaker/build/synth.json \
-	 --up5k \
-	 --package sg48 \
-	 --pre-pack synth/icestorm_icebreaker/nextpnr.py \
-	 --pcf synth/icestorm_icebreaker/netpnr.pcf \
-	 --asc $@
+synth/trellis_ulx3s/build/ulx3s.config: synth/trellis_ulx3s/build/synth.json synth/trellis_ulx3s/nextpnr.py synth/trellis_ulx3s/nextpnr_ecp5.lpf
+	nextpnr-ecp5 --12k --json synth/trellis_ulx3s/build/synth.json \
+	 --pre-pack synth/trellis_ulx3s/nextpnr.py \
+	 --lpf synth/trellis_ulx3s/nextpnr_ecp5.lpf \
+	 --report synth/trellis_ulx3s/build/timing.json \
+	 --placed-svg synth/trellis_ulx3s/build/placement.svg \
+	 --routed-svg synth/trellis_ulx3s/build/route.svg \
+	 --textcfg $@
 
-%.bit: %.asc
-	icepack $< $@
+%.bit: %.config
+	ecppack $< $@
 
-icestorm_icebreaker_program: synth/icestorm_icebreaker/build/icebreaker.bit
-	sudo $(shell which openFPGALoader) -b ice40_generic $<
+icestorm_icebreaker_program: synth/trellis_ulx3s/build/icebreaker.bit
+	sudo $(shell which fujprog) $<
 
 icestorm_icebreaker_flash: synth/icestorm_icebreaker/build/icebreaker.bit
-	sudo $(shell which openFPGALoader) -f -b ice40_generic $<
-
-synth/vivado_basys3/build/basys3/basys3.runs/impl_1/basys3.bit: synth/build/rtl.sv2v.v synth/vivado_basys3/basys3.sv synth/vivado_basys3/Basys3_Master.xdc synth/vivado_basys3/constraints.xdc synth/vivado_basys3/vivado.tcl
-	rm -rf synth/vivado_basys3/build/basys3
-	mkdir -p synth/vivado_basys3/build
-	cd synth/vivado_basys3/build && \
-	 vivado -quiet -nolog -nojournal -notrace -mode tcl \
-	  -source ../vivado.tcl
-
-vivado_basys3_program: synth/vivado_basys3/build/basys3/basys3.runs/impl_1/basys3.bit
-	sudo $(shell which openFPGALoader) -b vivado_basys3 $<
+	sudo $(shell which fujprog) $<
 
 clean:
 	rm -rf \
@@ -78,5 +68,4 @@ clean:
 	 dump.vcd dump.fst \
 	 synth/build \
 	 synth/yosys_generic/build \
-	 synth/icestorm_icebreaker/build \
-	 synth/vivado_basys3/build
+	 synth/trellis_ulx3s/build

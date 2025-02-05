@@ -1,9 +1,9 @@
 
 yosys -import
 
-read_verilog synth/build/rtl.sv2v.v synth/icestorm_icebreaker/icebreaker.v
+read_verilog synth/build/rtl.sv2v.v synth/trellis_ulx3s/ulx3s.v
 
-synth_ice40 -top icebreaker
+synth_ecp5 -top ulx3s
 
-write_verilog -noexpr -noattr -simple-lhs synth/icestorm_icebreaker/build/synth.v
-write_json synth/icestorm_icebreaker/build/synth.json
+write_verilog -noexpr -noattr -simple-lhs synth/trellis_ulx3s/build/synth.v
+write_json synth/trellis_ulx3s/build/synth.json
