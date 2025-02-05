@@ -19,6 +19,6 @@ jobs:
       - run: make lint
       - run: make sim
       - run: make gls
-      - run: make icestorm_icebreaker_gls
+      - run: make trellis_ulx3s_gls
 
       - run: make clean
