@@ -1,3 +1,6 @@
 [submodule "third_party/basejump_stl"]
 	path = third_party/basejump_stl
 	url = https://github.com/bespoke-silicon-group/basejump_stl.git
+[submodule "third_party/alexforencich_uart"]
+	path = third_party/alexforencich_uart
+	url = https://github.com/alexforencich/verilog-uart.git
