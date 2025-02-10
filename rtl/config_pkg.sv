@@ -1,6 +1,12 @@
-
 package config_pkg;
 
-// define structs and enums needed for design
+typedef enum logic [2:0] {
+    INIT,
+    PC,
+    BA,
+    READ,
+    WRITE,
+    SR
+} state_t;
 
 endpackage
