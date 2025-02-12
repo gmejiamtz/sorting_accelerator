@@ -34,10 +34,10 @@
     if (delay done):
         if (write and write is ready):
             go to WRITE
-            out = 0101
+            out = 0100
         else if (read and read is valid):
             go to READ
-            out = 0100
+            out = 0101
     else:
         stay in BA
         out = 0111
