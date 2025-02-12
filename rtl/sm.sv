@@ -60,7 +60,7 @@ module sm import config_pkg::*;
     logic [RCD_p-1:0] trcd_cnt_d, trcd_cnt_q;
 
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || trcd_cnt_rst) begin
             trcd_cnt_q <= 1'b0;
         end else if (state_q == BA) begin
             //will change later to be better
@@ -73,7 +73,7 @@ module sm import config_pkg::*;
     logic [REF_p-1:0] tref_cnt_d, tref_cnt_q;
 
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || tref_cnt_rst) begin
             tref_cnt_q <= 1'b0;
         end else if (state_q == SR) begin
             //will change later to be better
@@ -86,7 +86,7 @@ module sm import config_pkg::*;
     logic [XSR_p-1:0] txsr_cnt_d, txsr_cnt_q;
 
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || txsr_cnt_rst) begin
             txsr_cnt_q <= 1'b0;
         end else if (xsr_flag) begin
             //will change later to be better
