@@ -34,7 +34,7 @@ module sm import config_pkg::*;
     logic [1:0] trp_cnt_d, trp_cnt_q;
 
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || trp_cnt_rst) begin
             trp_cnt_q <= 1'b0;
         end else if (state_q == PC) begin
             //will change later to be better
@@ -44,10 +44,10 @@ module sm import config_pkg::*;
 
 //RSC TIMER
     logic [0:0] trsc_cnt_rst;
-    logic [RSC_p-1:0] trsc_cnt_d, trsc_cnt_q;
+    logic [$clog2(RSC_p):0] trsc_cnt_d, trsc_cnt_q;
 
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || trsc_cnt_rst) begin
             trsc_cnt_q <= 1'b0;
         end else if (state_q == MR) begin
             //will change later to be better
@@ -57,7 +57,7 @@ module sm import config_pkg::*;
 
 //RCD TIMER
     logic [0:0] trcd_cnt_rst;
-    logic [RCD_p-1:0] trcd_cnt_d, trcd_cnt_q;
+    logic [$clog2(RCD_p):0] trcd_cnt_d, trcd_cnt_q;
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trcd_cnt_rst) begin
@@ -70,7 +70,8 @@ module sm import config_pkg::*;
 
 //REF TIMER
     logic [0:0] tref_cnt_rst;
-    logic [REF_p-1:0] tref_cnt_d, tref_cnt_q;
+    //maybe it should be clog2(ref_p)-1, but the earlier cases cant be -1 so we'll stay consistent *for now*
+    logic [$clog2(REF_p):0] tref_cnt_d, tref_cnt_q;
 
     always_ff @(posedge clk_i) begin
         if (rst_i || tref_cnt_rst) begin
@@ -83,7 +84,8 @@ module sm import config_pkg::*;
 
 //XSR TIMER
     logic [0:0] txsr_cnt_rst;
-    logic [XSR_p-1:0] txsr_cnt_d, txsr_cnt_q;
+    //maybe it should be clog2(xsr_p)-1, but the earlier cases cant be -1 so we'll stay consistent *for now*
+    logic [$clog2(XSR_p):0] txsr_cnt_d, txsr_cnt_q;
 
     always_ff @(posedge clk_i) begin
         if (rst_i || txsr_cnt_rst) begin

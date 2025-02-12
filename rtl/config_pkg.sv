@@ -7,6 +7,7 @@ typedef enum logic [2:0] {
     BA,
     READ,
     WRITE,
+    PC2,
     SR
 } state_t;
 
