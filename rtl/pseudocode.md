@@ -2,10 +2,6 @@
 ## IDLE:
     out = 0111 (NOP)
     CKE = 1
-    if (SR timeUp):
-        out = 0001
-        CKE = 0
-        go to SR
     else if (go):
         out = 0010
         go to state PC
@@ -13,19 +9,14 @@
         out = 0111
         stay in IDLE
 
-## PC:
+## PC_activ:
     out = 0111 
     start t_RP delay
     if (delay done):
-        if (SR timeUp):
-            go to SR
-            out = 0001
-            CKE = 0
-        else:
-            go to SMR
-            out = 0000
+        go to MR
+        out = 0000
     else:
-        stay in PC
+        stay in PC_activ
 
 ## MR: 
     out = 0111
@@ -34,7 +25,7 @@
         go to BA
         out = 0011
     else:
-        stay in SMR
+        stay in MR
         out = 0111
 
 ## BA:
@@ -54,9 +45,9 @@
 ## READ:
     out = 0111
     if (read done & cas delay done):
-        go to IDLE
+        go to PC2
         read ready = 1
-        out = ???? (Might be DCs)
+        out = 0010
     else if (read done & cas delay not done):
         stay in READ
         begin cas delay
@@ -67,10 +58,21 @@
     out = 0111
     if (write done):
         write valid = 1
-        go to IDLE
-        out = ????
+        go to PC2
+        out = 0010
     else:
         stay in WRITE
+
+## PC_deactiv:
+    out = 0001
+    start t_RP delay
+    if (delay done):
+        go to SR
+        out = 0001
+        CKE = 0
+    else:
+        stay in PC_deactiv
+
 
 ## SR:
     out = 0001
