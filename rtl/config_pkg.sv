@@ -2,12 +2,12 @@ package config_pkg;
 
 typedef enum logic [2:0] {
     INIT,
-    PC,
+    PC_activ,
     MR,
     BA,
     READ,
     WRITE,
-    PC2,
+    PC_deactiv,
     SR
 } state_t;
 

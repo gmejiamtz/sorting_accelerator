@@ -5,6 +5,7 @@ module sm import config_pkg::*;
     parameter RCD_p = 2, 
     parameter XSR_p = 75, //min of 72, making it 75 for some leeway
     parameter REF_p = 0, //temp
+    parameter burst_len_p = 8,
     parameter data_len_p = 0, //temp
     parameter cas_laten_p = 2 
 )(
@@ -96,7 +97,45 @@ module sm import config_pkg::*;
         end 
     end    
 
-    
+
+//READ COUNT
+    logic [0:0] tread_cnt_rst, tread_cas_rst;
+    logic [7:0] tread_cnt_d, tread_cnt_q; 
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i || tread_cnt_rst) begin
+            tread_cnt_q <= 1'b0;
+        end else if (state_q == READ) begin
+            //will change later to be better
+            tread_cnt_q <= tread_cnt_d + 1;
+        end 
+    end 
+
+    logic [1:0] tread_cas_del_d, tread_cas_del_q;
+    logic [0:0] tread_flag;
+    always_ff @(posedge clk_i) begin
+        if (rst_i || tread_cas_rst) begin
+            tread_cas_q <= 0;
+        end else if ((state_q == READ) & tread_flag) begin
+            //will change later to be better
+            tread_cas_q <= tread_cas_d + 1;
+        end 
+    end 
+
+
+//WRITE COUNT
+    logic [0:0] twrite_cnt_rst;
+    logic [7:0] twrite_cnt_d, twrite_cnt_q; 
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i || twrite_cnt_rst) begin
+            twrite_cnt_q <= 0;
+        end else if (state_q == WRITE) begin
+            //will change later to be better
+            twrite_cnt_q <= twrite_cnt_d + 1;
+        end 
+    end 
+
     state_t [2:0] state_d, state_q;
     always_ff @(posedge clk_i) begin
         if (rst_i) state_q <= 3'd0;
@@ -116,21 +155,24 @@ module sm import config_pkg::*;
         tref_cnt_rst = 1'b0;
         txsr_cnt_rst = 1'b0;
 
+        tread_cnt_rst = 1'b0;
+        tread_cas_rst = 1'b0;
+        twrite_cnt_rst = 1'b0;
+        tread_flag = 1'b0;
+
         ic_CKE_o = 1'b1;
         xsr_flag = 1'b0;
-        
+
+        read_ready_o = 1'b0;
+        write_valid_o = 1'b0;
         
         case(state_q)
             INIT: begin
                 ic_l = 4'b0111;
 
                 //remember to include timer values
-                if (SR_TIMER && RAS_TIMER) begin
-                    state_d = SR;
-                    ic_l = 4'b0001;
-                    ic_CKE_o = 1'b0;
-                end else if (go_i && !SR_TIMER) begin
-                    state_d = PC;
+                if (go_i) begin
+                    state_d = PC_activ;
                     ic_l = 4'b0010;
                     trp_cnt_rst = 1'b1;
                 end else begin
@@ -139,26 +181,23 @@ module sm import config_pkg::*;
                 end
             end
 
-            PC: begin
+            PC_activ: begin
                 ic_l = 4'b0111;
 
-                if (SR_TIMER && RAS_TIMER) begin
-                    state_d = SR;
-                    ic_l = 4'b0001;
-                    ic_CKE_o = 1'b0;  
-                end else if (trp_cnt_q == 2'b10) begin
+                if (trp_cnt_q >= 2'b10) begin
                     state_d = MR;
                     ic_l = 4'b0000;
                     trsc_cnt_rst = 1'b1;
                 end else begin
-                    state_d = PC;
+                    state_d = PC_activ;
+                    ic_l = 4'b0111;
                 end
             end
 
             MR: begin 
                 ic_l = 4'b0111;
 
-                if (trsc_cnt_q == RSC_p) begin
+                if (trsc_cnt_q >= RSC_p) begin
                     state_d = BA;
                     ic_l = 4'b0011;
                     trcd_cnt_rst = 1'b1;
@@ -171,7 +210,7 @@ module sm import config_pkg::*;
             BA: begin 
                 ic_l = 4'b0111;
 
-                if (trcd_cnt_q == RCD_p) begin
+                if (trcd_cnt_q >= RCD_p) begin
                     if (rw_en_i && write_ready_i) begin 
                         state_d = WRITE;
                         ic_l = 4'b0101;      
@@ -182,36 +221,64 @@ module sm import config_pkg::*;
                 end
             end
 
-            /*
-             READ:
-                out = 0111
-                if (read done & cas delay done):
-                    go to IDLE
-                    read ready = 1
-                    out = ???? (Might be DCs)
-                else if (read done & cas delay not done):
-                    stay in READ
-                    begin cas delay
-                else:
-                    stay in READ
+            READ: begin
+                ic_l = 4'b0111;
+
+                if (tread_cnt_q >= burst_len_p) begin
+                    //tread_cnt_rst = 1'b1; // Might not want? It'll reset immediately, but not get through 2nd if statement in time b4 goes to 0
+                    tread_flag = 1'b1;
+                    if (tread_cas_del_q >= 2) begin
+                        state_d = PC_deactiv;
+                        read_ready_o = 1'b1;
+                        tread_cas_rst = 1'b1;
+                        tread_cnt_rst = 1'b1;
+                        tread_flag = 1'b0;
+                        ic_l = 4'b0010;
+                    end else begin
+                        state_d = READ;
+                        ic_l = 4'b0111;
+                    end 
+                end else begin
+                    state_d = READ;
+                    ic_l = 4'b0111;
+                end
+            end
+
+            WRITE: begin
+                ic_l = 4'b0111;
+
+                if (twrite_cnt_q >= burst_len_p) begin
+                    state_d = PC_deactiv;
+                    write_valid_o = 1'b1;
+                    twrite_cnt_rst = 1'b1;
+                    ic_l = 4'b0010;
+                end else begin
+                    state_d = WRITE;
+                    ic_l = 4'b0111;
+                end
+            end
             
-            WRITE:
-                out = 0111
-                if (write done):
-                    write valid = 1
-                    go to IDLE
-                    out = ????
-                else:
-                    stay in WRITE
-                */
+            PC_deactiv: begin
+                ic = 4'b0111;
+                
+                if (trp_cnt_q >= 2'b10) begin
+                    state_d = SR;
+                    ic_l = 4'b0001;
+                    ic_CKE_o = 1'b0;
+                    trsc_cnt_rst = 1'b1;
+                end else begin
+                    state_d = PC_deactiv;
+                    ic_l = 4'b0111;
+                end
+            end
             
             SR: begin
                 ic_l = 4'b0111;
                 ic_CKE_o = 1'b0;
 
-                if (tref_cnt_q <= REF_p) begin
+                if (tref_cnt_q >= REF_p) begin
                     xsr_flag = 1'b1;
-                    if (txsr_cnt_q == XSR_p) begin
+                    if (txsr_cnt_q >= XSR_p) begin
                         state_d = INIT;
                         ic_l = 4'b0111;
                         ic_CKE_o = 1'b1;
@@ -227,15 +294,7 @@ module sm import config_pkg::*;
                 end
             end
 
-
-
         endcase
-    
-    
-
-    
-    
-    
     end
 
 
