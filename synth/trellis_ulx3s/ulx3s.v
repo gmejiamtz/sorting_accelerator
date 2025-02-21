@@ -111,12 +111,12 @@ always @(*) begin
     oled_resn = gp[11];
 end
 
-// LED control signals
-// always @(*) begin
-//     led[7] = wifi_gpio5;
-//     led[6] = S_prog_out[1]; // Green LED when ESP32 disabled
-//     led[5] = ~R_prog_release[17]; // Indicate ESP32 programming start
-// end
+LED control signals
+always @(*) begin
+    led[7] = wifi_gpio5;
+    led[6] = S_prog_out[1]; // Green LED when ESP32 disabled
+    led[5] = ~R_prog_release[17]; // Indicate ESP32 programming start
+end
 
 // Programming release counter
 always @(posedge clk) begin
@@ -175,11 +175,11 @@ EHXPLLL #(
         .LOCK(locked)
 	);
 
-top top_inst (.clk(clk), .rst(!reset_ni), .rx_i(wifi_txd), .tx_o());
+top top_inst (.clk(clk), .rst(!reset_ni), .rx_i(gp[10]), .tx_o(gn[11]));
 
 assign led[2] = !ftdi_rxd;
-// assign led[5] = !wifi_txd;
-// assign led[2] = !btn[0];
+// assign led[5] = !gp[10];
+// assign led[2] = !gn[11];
 // assign wifi_en = 1;
 assign user_programn = ~R_progn[7];
 
