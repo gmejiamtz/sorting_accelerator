@@ -9,6 +9,8 @@ logic [7:0] rx_data_out;
 logic rx_valid_out;
 logic tx_ready;
 
+
+
 uart_rx #(.DATA_WIDTH(8)) uart_rx_inst (
     .clk(clk),
     .rst(rst),
