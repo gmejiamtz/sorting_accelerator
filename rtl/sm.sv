@@ -12,7 +12,6 @@ module sm import config_pkg::*;
     input   logic   [0:0]   clk_i,
     input   logic   [0:0]   rst_i,
     input   logic   [0:0]   go_i,
-    input   logic   [0:0]   delay_i,
     input   logic   [0:0]   rw_en_i, //1 = write, 0 == read
     input   logic   [0:0]   read_valid_i, //check handshake smh sean
     input   logic   [0:0]   write_ready_i,
