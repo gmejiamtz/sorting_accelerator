@@ -1,8 +1,7 @@
 module top(
     input   logic   [0:0]   clk_i,
     input   logic   [0:0]   rst_i,
-    input   logic   [7:0]   m_data_i,
-    input   logic   [7:0]   s_data_i,
+    input   logic   [7:0]   m_data_i, // Instructions given to memory controller
     input   logic   [0:0]   go_i,
     input   logic   [0:0]   rw_en_i, // Assuming constant signal
     input   logic   [0:0]   read_valid_i,
@@ -16,7 +15,9 @@ module top(
     output  logic   [0:0]   CAS_o,
     output  logic   [0:0]   WE_o,
     output  logic   [0:0]   CKE_o,
-    output  logic   [7:0]   m_data_o
+    output  logic   [7:0]   m_data_o, // Data going out of memory controller
+
+    inout           [7:0]   data_io
 );
 
     localparam BS0 = 1'b1;
@@ -25,9 +26,10 @@ module top(
     always_comb begin
         bank_sel_o = {BS1, BS0};
         if (!rw_en_i) begin // We're reading, so taking in data from SDRAM
-            m_data_o = s_data_i;
+            m_data_o = data_io;
         end else begin      // We're writing, so sending data to SDRAM
-            m_data_o = m_data_i;
+            data_io = m_data_i;
+            m_data_o = 'bz;
         end
     end
 
@@ -44,8 +46,8 @@ module top(
         .ic_RAS_o(RAS_o),
         .ic_WE_o(WE_o),
         .ic_CKE_o(CKE_o),
-        .read_ready_o(),
-        .write_valid_o()
+        .read_ready_o,
+        .write_valid_o
     );
 
 
