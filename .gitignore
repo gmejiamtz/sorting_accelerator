@@ -6,3 +6,4 @@ __pycache__
 *.fst
 build
 .vscode
+third_party/*

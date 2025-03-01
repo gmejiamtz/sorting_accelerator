@@ -30,7 +30,7 @@ localparam [31:0] MASKED_IRQ = 32'h 0000_0000;
 localparam [31:0] LATCHED_IRQ = 32'h ffff_ffff;
 localparam [31:0] PROGADDR_RESET = 32'h 0000_0000;
 localparam [31:0] PROGADDR_IRQ = 32'h 0000_0000;
-localparam [31:0] STACKADDR = 32'h 0001_0000;
+localparam [31:0] STACKADDR = 32'h 0000_1000;
 
 //picorv32 instruction parameters
 localparam DEPTH_P = 8192;
@@ -149,11 +149,12 @@ ram_1r1w_sync #(.width_p(WIDTH_P),
 	instruction_memory_inst (
 		.clk_i(clk_i),
 		.reset_i(1'b0),
-		.wr_valid_i(mem_valid & ~mem_instr),
+		.wr_valid_i(mem_valid & ~mem_instr & |mem_wstrb),
 		.wr_data_i(mem_wdata),
-		.wr_addr_i(({~mem_instr,mem_addr[11:0]} & {13{(|mem_wstrb)}}) >> 2),
+		.wr_addr_i(({1'b1,mem_addr[11:0]} & {13{(|mem_wstrb)}}) >> 2),
 		.rd_addr_i(({~mem_instr,mem_addr[11:0]} & {13{~(|mem_wstrb)}}) >> 2),
 		.rd_data_o(mem_rdata)
+		//,.rd_data_valid(mem_ready)	//is this necessary cuz docs say it can just be tied high
 );
 /*
 uart_tx #(.DATA_WIDTH(8)) uart_tx_inst (
