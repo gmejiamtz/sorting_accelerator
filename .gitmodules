@@ -4,3 +4,6 @@
 [submodule "third_party/alexforencich_uart"]
 	path = third_party/alexforencich_uart
 	url = https://github.com/alexforencich/verilog-uart.git
+[submodule "third_party/picorv32"]
+	path = third_party/picorv32
+	url = https://github.com/YosysHQ/picorv32.git

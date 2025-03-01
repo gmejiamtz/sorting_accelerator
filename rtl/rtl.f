@@ -7,6 +7,9 @@ ${ALEXFORENCICH_UART_DIR}/rtl/uart_rx.v
 ${ALEXFORENCICH_UART_DIR}/rtl/uart_tx.v
 ${ALEXFORENCICH_UART_DIR}/rtl/uart.v
 
-rtl/config_pkg.sv
+-I${PICORV32_DIR}/rtl
+${PICORV32_DIR}/picorv32.v
 
+rtl/config_pkg.sv
+rtl/ram_1r1w_sync.sv
 rtl/top.sv
