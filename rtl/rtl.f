@@ -9,4 +9,5 @@ ${ALEXFORENCICH_UART_DIR}/rtl/uart.v
 
 rtl/config_pkg.sv
 
-rtl/top.sv
+rtl/sorter.sv
+// rtl/top.sv
