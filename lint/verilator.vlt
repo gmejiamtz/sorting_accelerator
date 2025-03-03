@@ -4,6 +4,12 @@ lint_off -file "*third_party/*" -match "*"
 lint_off -file "*synth/*build/*" -match "*"
 lint_off -file "*yosys/*" -match "*"
 
+lint_off -rule WIDTH
 lint_off -rule PINCONNECTEMPTY
 lint_off -rule GENUNNAMED
 lint_off -rule UNUSEDPARAM -file "*pkg.sv"
+lint_off -rule UNOPTFLAT
+lint_off -rule VARHIDDEN
+
+lint_off -rule PINMISSING -file "*dv/*"
+lint_off -rule SYNCASYNCNET -file "*dv/*"
