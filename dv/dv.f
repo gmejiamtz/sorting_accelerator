@@ -1,7 +1,9 @@
 
 dv/dv_pkg.sv
 
-dv/ulx3s_tb.sv
+// dv/ulx3s_tb.sv
+
+dv/sorter_tb.sv
 
 --timing
 -j 0

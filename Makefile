@@ -1,5 +1,6 @@
 
-TOP := ulx3s_tb
+# TOP := ulx3s_tb
+TOP := sorter_tb
 
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
 export ALEXFORENCICH_UART_DIR := $(abspath third_party/alexforencich_uart)
@@ -20,7 +21,7 @@ SV2V_ARGS := $(shell \
 .PHONY: lint sim gls trellis_ulx3s_gls trellis_ulx3s_program trellis_ulx3s_flash clean
 
 lint:
-	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top top
+	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top sorter
 
 sim:
 	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f rtl/rtl.f -f dv/pre_synth.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
