@@ -121,6 +121,7 @@ always_comb begin
             end
         end
         2'b11 : begin
+            receive_ready_o = 1'b0;
             read_valid_o = 1'b1;
             data_o_f = 1'b1;
             if (mem_addr_q != '0) begin
