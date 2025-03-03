@@ -38,8 +38,10 @@ task automatic reset_to_start;
     rst_i <= 1'b1;
     start_i <= 1'b0;
     @(posedge clk_i);
+    @(posedge clk_i);
     rst_i <= 1'b0;
     start_i <= 1'b1;
+    @(posedge clk_i);
     @(posedge clk_i);
     start_i <= 1'b0;
 endtask
@@ -56,6 +58,7 @@ logic [0:0] write_valid_i;
 task automatic ready_and_write;
     write_valid_i <= 1'b1;
     dut_data_i <= {DATA_W{1'b1}};
+    @(posedge clk_i);
     @(posedge clk_i);
     dut_data_i <= {DATA_W{1'b0}};
     write_valid_i <= 1'b0;
