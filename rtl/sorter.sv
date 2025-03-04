@@ -13,14 +13,17 @@ module sorter #(
     output  logic   [DATA_WIDTH-1:0]   data_o
 );
 
-reg [DATA_WIDTH-1:0] mem [DATA_ENTRIES-1:0];
-logic [$clog2(DATA_ENTRIES)-1:0] mem_addr_d, mem_addr_q;
+logic [DATA_WIDTH-1:0] mem [DATA_ENTRIES];
+logic [$clog2(DATA_ENTRIES):0] mem_addr_d, mem_addr_q;
 
 logic [1:0] state_d, state_q;
 always_ff @(posedge clk_i) begin
     if (rst_i) begin
         state_q <= 2'b00;
         mem_addr_q <= '0;
+        for (int i = 0; i < DATA_ENTRIES; i++) begin
+            mem[i] <= 'x; 
+        end
     end else begin
         state_q <= state_d;
         mem_addr_q <= mem_addr_d;
@@ -28,38 +31,21 @@ always_ff @(posedge clk_i) begin
     end
 end
 
-
 // SORTER
-logic [DATA_WIDTH-1:0]           temp_l;
-logic [$clog2(DATA_ENTRIES)-1:0] min_l;
-logic [0:0]                      sort_f, sort_done_f;
+logic [0:0] sort_f, sort_done_f;
 always_ff @(posedge clk_i) begin
-    min_l <= '0;
-    temp_l <= {DATA_WIDTH{1'b0}};
     if (rst_i) begin
         sort_done_f <= 1'b0;
-        for (int i = 0; i < DATA_ENTRIES; i++) begin
-            mem[i] <= 'x; 
-        end
     end else begin
         sort_done_f <= 1'b0;
         if (mem_i_f) begin
             mem[mem_addr_q] <= data_i;
         end else if (sort_f) begin
-            foreach (mem[i]) begin
-                min_l <= i;
-                for (int j = 1; j < DATA_ENTRIES; j++) begin
-                    if (mem[j] < mem[min_l]) begin
-                        min_l <= j;
-                    end
-                end
-                temp_l <= mem[i];
-                mem[i] <= mem[min_l];
-                mem[min_l] <= temp_l;
-            end
+            mem.sort();
+            @(posedge clk_i);
             sort_done_f <= 1'b1;
         end else begin
-            mem <= mem;
+            ;
         end
     end
 end
@@ -76,12 +62,22 @@ always_ff @(posedge clk_i) begin // Data Going Out
     end
 end
 
-
+logic   [0:0] cnt_rst;
+logic   [1:0] cnt_d, cnt_q;
+always_ff @(posedge clk_i) begin
+    if (rst_i | cnt_rst) begin
+        cnt_q <= 2'b00;
+    end else begin
+        cnt_q <= cnt_d;
+    end
+end
 
 logic [0:0] mem_i_f, data_o_f;
 always_comb begin
     state_d = state_q;
     mem_addr_d = mem_addr_q;
+    cnt_d = cnt_q;
+    cnt_rst = 1'b0;
     receive_ready_o = 1'b1;
     read_valid_o = 1'b0;
     sort_f = 1'b0;
@@ -90,6 +86,10 @@ always_comb begin
 
     case(state_q)
         2'b00 : begin
+            if (cnt_q == 2'b01) begin
+                cnt_rst = 1'b1;
+                read_valid_o = 1'b1;
+            end
             if (!start_i) begin 
                 state_d = 2'b00;
             end else if (start_i) begin
@@ -98,11 +98,12 @@ always_comb begin
             end
         end
         2'b01 : begin
-            if (mem_addr_q != $clog2(DATA_ENTRIES) && write_valid_i) begin // Mem is not yet full
+            if (mem_addr_q != (DATA_ENTRIES) && write_valid_i) begin // Mem is not yet full
                 mem_i_f = 1'b1;
                 mem_addr_d = mem_addr_q + 1;
                 state_d = 2'b01;
-            end else if (mem_addr_q == $clog2(DATA_ENTRIES)) begin // Mem is full, move on
+            end else if (mem_addr_q == (DATA_ENTRIES)) begin // Mem is full, move on
+                mem_addr_d = mem_addr_q - 1;
                 mem_i_f = 1'b0;
                 receive_ready_o = 1'b0;
                 state_d = 2'b10;
@@ -112,16 +113,22 @@ always_comb begin
         end
         2'b10 : begin
             receive_ready_o = 1'b0;
-            sort_f = 1'b1;
             if (sort_done_f) begin
-                read_valid_o = 1'b1;
+                sort_f = 1'b0;
+                read_valid_o = 1'b0;
                 state_d = 2'b11;
             end else begin
+                sort_f = 1'b1;
                 state_d = 2'b10;
             end
         end
         2'b11 : begin
-            read_valid_o = 1'b1;
+            if (cnt_q != 2'b01) begin
+                read_valid_o = 1'b0;
+                cnt_d = cnt_q + 1;
+            end else begin
+                read_valid_o = 1'b1;
+            end 
             data_o_f = 1'b1;
             if (mem_addr_q != '0) begin
                 mem_addr_d = mem_addr_q - 1;
@@ -130,6 +137,16 @@ always_comb begin
                 mem_addr_d = '0;
                 state_d = 2'b00;
             end
+        end
+        default: begin
+            state_d = 2'b00;
+            mem_addr_d = '0;
+            receive_ready_o = 1'b1;
+            read_valid_o = 1'b0;
+            sort_f = 1'b0;
+            data_o_f = 1'b0;
+            mem_i_f = 1'b0;
+            cnt_rst = 1'b0;
         end
     endcase
 end
