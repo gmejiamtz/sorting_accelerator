@@ -1,3 +1,4 @@
+// source ./.devcontainer/startup.sh
 `timescale 1ns/1ps
 
 module sorter_runner;
@@ -48,7 +49,7 @@ endtask
 
 
 task automatic delay;
-    int cycles = $urandom_range(10, 20);
+    int cycles = $urandom_range(100, 200);
     for (int i = 0; i < cycles; i++) begin
         @(posedge clk_i); #1;
     end
@@ -57,7 +58,7 @@ endtask
 logic [0:0] write_valid_i;
 task automatic ready_and_write;
     write_valid_i <= 1'b1;
-    dut_data_i <= {DATA_W{1'b1}};
+    dut_data_i <= $urandom_range(0, 255);
     @(posedge clk_i);
     @(posedge clk_i);
     dut_data_i <= {DATA_W{1'b0}};
