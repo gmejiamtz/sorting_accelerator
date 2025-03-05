@@ -30,7 +30,6 @@ sorter #(
     .write_valid_i,
     .start_i,
     .data_i(dut_data_i),
-    .receive_ready_o(),
     .read_valid_o(),
     .data_o(dut_data_o)
 );
