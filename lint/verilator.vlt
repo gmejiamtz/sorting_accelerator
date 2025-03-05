@@ -10,6 +10,7 @@ lint_off -rule GENUNNAMED
 lint_off -rule UNUSEDPARAM -file "*pkg.sv"
 lint_off -rule UNOPTFLAT
 lint_off -rule VARHIDDEN
+lint_off -rule UNUSEDSIGNAL
 
 lint_off -rule PINMISSING -file "*dv/*"
 lint_off -rule SYNCASYNCNET -file "*dv/*"
