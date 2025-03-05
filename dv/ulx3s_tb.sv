@@ -13,7 +13,8 @@ initial begin
     $urandom(100);
     $timeformat( -3, 3, "ms", 0);
     ulx3s_runner.reset();
-    ulx3s_runner.wait_n_cycles(5000);
+    ulx3s_runner.wait_n_cycles(2);
+    ulx3s_runner.run_until_ebreak();
     $display( "End simulation." );
     $finish;
 end

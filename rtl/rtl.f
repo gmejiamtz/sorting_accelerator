@@ -10,6 +10,6 @@ ${ALEXFORENCICH_UART_DIR}/rtl/uart.v
 -I${PICORV32_DIR}/rtl
 ${PICORV32_DIR}/picorv32.v
 
+rtl/axil_ram.v
 rtl/config_pkg.sv
-rtl/ram_1r1w_sync.sv
 rtl/top.sv
