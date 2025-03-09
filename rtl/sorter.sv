@@ -22,10 +22,10 @@ pipelined_mem (.clk_i,
     .rst_ni(!rst_i),
     .request_ready_o(),
     .request_valid_i(request_mem | write_valid_i),
-    .request_write_not_read_i(rw_en),
-    .request_addr_i(mem_addr_q),
+    .request_write_not_read_i(cntl_rw_en),
+    .request_addr_i(cntl_addr),
     .request_id_i(),
-    .request_w_data_i(data_i),
+    .request_w_data_i(cntl_data_i),
     .read_ready_i(request_mem),
     .read_valid_o(read_valid_o),
     .read_addr_o(),
@@ -56,12 +56,136 @@ always_ff @(posedge clk_i) begin
     end
 end
 
+// CONTROLLER
+logic [$clog2(DATA_ENTRIES):0]  cntl_addr;
+logic [0:0]                     cntl_rw_en;
+logic [0:0]                     cntl_request;
+logic [DATA_WIDTH - 1:0]        cntl_data_i;
+always_comb begin
+    if (rst_i) begin
+        cntl_addr = 'x;
+        cntl_rw_en = 1'b0;
+        cntl_request = 1'b0;
+        cntl_data_i = 'x;
+    end else begin
+        if (sort_en) begin
+            cntl_addr = sort_addr;
+            cntl_rw_en = sort_rw_en;
+            cntl_request = sort_request;
+            cntl_data_i = sort_data_i;
+        end else begin
+            cntl_addr = mem_addr_q;
+            cntl_rw_en = rw_en;
+            cntl_request = request_mem;
+            cntl_data_i = data_i;
+        end
+    end
+end
+
+// ALT FOR LOOP
+
+    // 2 CYCLE COUNT
+logic [1:0] two_cycle_d, two_cycle_q;
+logic [0:0] two_cycle_en;
+always_comb begin
+    two_cycle_en = 1'b0;
+    two_cycle_d = two_cycle_q;
+    if (two_cycle_en && (two_cycle_q != 2'd2)) begin
+        two_cycle_d = two_cycle_q + 1;
+    end else begin
+        two_cycle_d = '0;
+    end
+end
+
+logic [$clog2(DATA_ENTRIES):0]  for_i_addr_d, for_i_addr_q;
+logic [$clog2(DATA_ENTRIES):0]  for_j_addr_d, for_j_addr_q;
+logic [0:0]                     i_en, j_en;
+always_comb begin
+    for_i_addr_d = for_i_addr_q;
+    for_j_addr_d = for_j_addr_q;
+
+    if (for_i_addr_d != (DATA_ENTRIES) && (i_en)) begin
+        if (for_j_addr_q != (DATA_ENTRIES-1) && (j_en)) begin
+            if (for_j_addr_q < for_i_addr_q) begin // New BS Line
+                for_j_addr_d = for_i_addr_q + 1;
+            end else begin
+                for_j_addr_d = for_j_addr_q + 1;
+            end
+        end else begin
+            if (for_i_addr_q == (DATA_ENTRIES - 1))
+                for_i_addr_d = '0;
+            else
+                for_i_addr_d = for_i_addr_q + 1;
+            if ((for_i_addr_q + 2) == (DATA_ENTRIES)) begin
+                for_j_addr_d = for_i_addr_q + 1;
+            end else if ((for_i_addr_q + 1) == (DATA_ENTRIES)) begin
+                for_j_addr_d = '0;
+            end else begin
+                for_j_addr_d = for_i_addr_q + 2;
+            end
+        end
+    end else begin
+        for_i_addr_d = '0;
+        for_j_addr_d = '0;
+    end
+end
+
+
+always_ff @(posedge clk_i) begin
+    if (rst_i) begin
+        for_i_addr_q <=  '0;
+        for_j_addr_q <=  '0;
+        two_cycle_q    <= 2'b00;
+    end else begin
+        for_i_addr_q <= for_i_addr_d;
+        for_j_addr_q <= for_j_addr_d;
+        two_cycle_q    <= two_cycle_d;
+    end
+end
+
 // SORTER
+logic [0:0]                     sort_done;
+int                             min;
+logic [DATA_WIDTH - 1:0]        sort_data_i;
+logic [DATA_WIDTH - 1:0]        data_min;
+// logic [DATA_WIDTH - 1:0]        data_comp;
+// logic [DATA_WIDTH - 1:0]        data_intr;
+logic [$clog2(DATA_ENTRIES):0]  sort_addr;
+logic [0:0]                     sort_rw_en;
+logic [0:0]                     sort_request;
+
+always_comb begin
+    if (sort_en) begin
+        i_en = 1'b1;
+        j_en = 1'b1;
+        sort_request = 1'b1;
+        sort_rw_en = 1'b0;
+        min = for_i_addr_q;
+        sort_addr = min[7:0];
+        sort_data_i = 'x;
+        data_min = read_data_mem;
+    end else begin
+        i_en = 1'b0;
+        j_en = 1'b0;
+        // two_cycle_en = 1'b0;
+        min = 0;
+        sort_data_i = 'x;
+        data_min = 'x;
+        // data_comp = 'x;
+        // data_intr = 'x;
+        sort_addr = 'x;
+        sort_rw_en = 1'b0;
+        sort_request = 1'b0;
+    end
+end
+
+// DATA_OUT
+logic [0:0] read_out;
 always_ff @(posedge clk_i) begin // Data Going Out
     if (rst_i) begin
         data_o <= 'x;
     end else begin
-        if (read_valid_o) begin
+        if (read_valid_o && read_out) begin
             data_o <= read_data_mem;
         end else begin
             data_o <= 'x;
@@ -78,6 +202,7 @@ always_comb begin
     rw_en = 1'b0;
     request_mem = 1'b0;
     sort_en = 1'b0;
+    read_out = 1'b0;
     case(state_q)
         2'b00 : begin
             if (!start_i) begin 
@@ -104,9 +229,25 @@ always_comb begin
             end
         end
         2'b10 : begin
-            state_d = 2'b11; // Immediate Transition for now
+            // if (!sort_done) begin
+            //     sort_en = 1'b1;
+            //     state_d = 2'b10;
+            // end else begin
+            //     sort_en = 1'b0;
+            //     state_d = 2'b11;
+            // end
+            if (for_i_addr_q == (DATA_ENTRIES - 1)) begin
+                request_mem = 1'b0;
+                sort_en = 1'b0;
+                state_d = 2'b11;
+            end else begin
+                request_mem = 1'b1;
+                sort_en = 1'b1;
+                state_d = 2'b10;
+            end
         end
         2'b11 : begin
+            read_out = 1'b1;
             if ((mem_addr_q != 0)) begin
                 rw_en = 1'b0;
                 request_mem = 1'b1;
