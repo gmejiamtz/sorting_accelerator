@@ -31,7 +31,7 @@ THE SOFTWARE.
 /*
  * AXI4-Lite RAM
  */
-module axil_ram #
+module axil_rom #
 (
     // Width of data bus in bits
     parameter DATA_WIDTH = 32,
