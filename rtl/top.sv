@@ -40,9 +40,9 @@ localparam instruction_memory_file = "/workspaces/sorting_accelerator/third_part
 
 //interconnect addresses
 localparam ROM_ADDRESS = 32'h0;
-localparam RAM_ADDRESS = 32'h0100_1000;
-localparam SORT_ADDRESS = 32'h1000_5000;
-localparam UART_ADDRESS = 32'h1100_BEEF;
+localparam RAM_ADDRESS = 32'h0100_0000;
+localparam SORT_ADDRESS = 32'h1000_0000;
+localparam UART_ADDRESS = 32'h1100_0000;
 
 //picorv32 wires
 wire        mem_axi_awvalid;
@@ -266,7 +266,7 @@ pico_to_mems_and_uart #(
     .ADDR_WIDTH(WIDTH_P),
     .M00_BASE_ADDR(ROM_ADDRESS),
     .M01_BASE_ADDR(RAM_ADDRESS),
-    .M02_ADDR_WIDTH(SORT_ADDRESS),
+    .M02_BASE_ADDR(SORT_ADDRESS),
     .M03_BASE_ADDR(UART_ADDRESS)
 )
 pico_to_memory_and_uart_interconnect_inst
