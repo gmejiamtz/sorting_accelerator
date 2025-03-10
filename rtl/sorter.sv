@@ -27,7 +27,7 @@ pipelined_mem (.clk_i,
     .request_id_i(),
     .request_w_data_i(cntl_data_i),
     .read_ready_i(request_mem),
-    .read_valid_o(read_valid_o),
+    .read_valid_o(),
     .read_addr_o(),
     .read_id_o(),
     .read_data_o(read_data_mem)
@@ -132,6 +132,7 @@ always_ff @(posedge clk_i) begin
         data_min_q <= '0;
         data_comp_q <= '0;
         read_count_q <= 2'b00;
+        read_valid_o <= 1'b0;
     end else begin
         for_i_addr_q <= for_i_addr_d;
         for_j_addr_q <= for_j_addr_d;
@@ -139,6 +140,7 @@ always_ff @(posedge clk_i) begin
         data_min_q <= data_min_d;
         data_comp_q <= data_comp_d;
         read_count_q <= read_count_d;
+        read_valid_o <= read_out;
     end
 end
 
