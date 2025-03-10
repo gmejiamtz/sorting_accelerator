@@ -18,7 +18,7 @@ initial begin
         sorter_runner.delay();
     end
 
-    #1000;
+    #10000;
     $display( "End simulation." );
     $finish;
 end
