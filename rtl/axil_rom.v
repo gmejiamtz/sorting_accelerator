@@ -41,7 +41,7 @@ module axil_rom #
     parameter STRB_WIDTH = (DATA_WIDTH/8),
     // Extra pipeline register on output
     parameter PIPELINE_OUTPUT = 0,
-    parameter  filename_p = "memory_init_file.hex"
+    parameter filename_p = "/workspaces/sorting_accelerator/third_party/picorv32i_programs/bubble_sort/firmware/firmware.hex"
 )
 (
     input  wire                   clk,

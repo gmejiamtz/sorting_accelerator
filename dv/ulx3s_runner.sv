@@ -4,7 +4,9 @@ module ulx3s_runner;
 logic clk_i;
 logic reset_i;
 logic tx_o;
+logic [3:0] led;
 logic ebreak_found;
+
 parameter realtime ClockPeriod = 20ns;
 
 initial begin
@@ -18,7 +20,8 @@ end
 top uut (
     .clk_i(clk_i),
     .reset_i(reset_i),
-    .tx_o(tx_o)
+    .tx_o(tx_o),
+    .led(led)
 );
 
 task automatic reset;

@@ -4,6 +4,7 @@ TOP := ulx3s_tb
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
 export ALEXFORENCICH_UART_DIR := $(abspath third_party/alexforencich_uart)
 export VERILOG_AXI_DIR := $(abspath third_party/verilog_axi)
+export UART_AXI_DIR := $(abspath third_party/axi_uart)
 export PICORV32_DIR := $(abspath third_party/picorv32)
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
 
@@ -11,6 +12,7 @@ RTL := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
  ALEXFORENCICH_UART_DIR=$(ALEXFORENCICH_UART_DIR) \
  VERILOG_AXI_DIR=$(VERILOG_AXI_DIR) \
+ UART_AXI_DIR=$(UART_AXI_DIR) \
  PICORV32_DIR=$(PICORV32_DIR) \
  python3 misc/convert_filelist.py Makefile rtl/rtl.f \
 )
@@ -19,6 +21,7 @@ SV2V_ARGS := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
  ALEXFORENCICH_UART_DIR=$(ALEXFORENCICH_UART_DIR) \
  VERILOG_AXI_DIR=$(VERILOG_AXI_DIR) \
+ UART_AXI_DIR=$(UART_AXI_DIR) \
  PICORV32_DIR=$(PICORV32_DIR) \
  python3 misc/convert_filelist.py sv2v rtl/rtl.f \
 )

@@ -1,7 +1,8 @@
 module top(
     input clk_i,
     input reset_i,
-    output tx_o
+    output tx_o,
+	output [3:0] led
 );
 
 //picorv32 core parameters
@@ -18,9 +19,9 @@ localparam [0:0] COMPRESSED_ISA = 0;
 localparam [0:0] CATCH_MISALIGN = 1;
 localparam [0:0] CATCH_ILLINSN = 1;
 localparam [0:0] ENABLE_PCPI = 0;		//for sorter and uart out
-localparam [0:0] ENABLE_MUL = 0;
+localparam [0:0] ENABLE_MUL = 1;
 localparam [0:0] ENABLE_FAST_MUL = 0;
-localparam [0:0] ENABLE_DIV = 0;
+localparam [0:0] ENABLE_DIV = 1;
 localparam [0:0] ENABLE_IRQ = 0;
 localparam [0:0] ENABLE_IRQ_QREGS = 0;
 localparam [0:0] ENABLE_IRQ_TIMER = 0;
@@ -35,7 +36,13 @@ localparam [31:0] STACKADDR = 32'h 0000_2000;
 //picorv32 instruction parameters
 localparam DEPTH_P = 16; //only use 13 bits tho
 localparam WIDTH_P = 32;
-localparam instruction_memory_file = "/workspaces/sorting_accelerator/misc/firmware.hex";
+localparam instruction_memory_file = "/workspaces/sorting_accelerator/third_party/picorv32i_programs/bubble_sort/firmware/firmware.hex";
+
+//interconnect addresses
+localparam ROM_ADDRESS = 32'h0;
+localparam RAM_ADDRESS = 32'h0100_1000;
+localparam SORT_ADDRESS = 32'h1000_5000;
+localparam UART_ADDRESS = 32'h1100_BEEF;
 
 //picorv32 wires
 wire        mem_axi_awvalid;
@@ -59,6 +66,8 @@ wire [ 2:0] mem_axi_arprot;
 wire        mem_axi_rvalid;
 wire        mem_axi_rready;
 wire [31:0] mem_axi_rdata;
+wire [1:0]	mem_axi_bresp;
+wire [1:0]	mem_axi_rresp;
 wire trap;
 
 //picorc32 co processor wires
@@ -79,6 +88,105 @@ wire [31:0] eoi;
 wire trace_valid;
 wire [35:0] trace_data;
 
+//rom axi wires
+wire        rom_axi_awvalid;
+wire        rom_axi_awready;
+wire [31:0] rom_axi_awaddr;
+wire [ 2:0] rom_axi_awprot;
+
+wire        rom_axi_wvalid;
+wire        rom_axi_wready;
+wire [31:0] rom_axi_wdata;
+wire [ 3:0] rom_axi_wstrb;
+
+wire        rom_axi_bvalid;
+wire        rom_axi_bready;
+
+wire        rom_axi_arvalid;
+wire        rom_axi_arready;
+wire [31:0] rom_axi_araddr;
+wire [ 2:0] rom_axi_arprot;
+
+wire        rom_axi_rvalid;
+wire        rom_axi_rready;
+wire [31:0] rom_axi_rdata;
+wire [1:0]	rom_axi_bresp;
+wire [1:0]	rom_axi_rresp;
+
+//ram axi wires
+wire        ram_axi_awvalid;
+wire        ram_axi_awready;
+wire [31:0] ram_axi_awaddr;
+wire [ 2:0] ram_axi_awprot;
+
+wire        ram_axi_wvalid;
+wire        ram_axi_wready;
+wire [31:0] ram_axi_wdata;
+wire [ 3:0] ram_axi_wstrb;
+
+wire        ram_axi_bvalid;
+wire        ram_axi_bready;
+
+wire        ram_axi_arvalid;
+wire        ram_axi_arready;
+wire [31:0] ram_axi_araddr;
+wire [ 2:0] ram_axi_arprot;
+
+wire        ram_axi_rvalid;
+wire        ram_axi_rready;
+wire [31:0] ram_axi_rdata;
+wire [1:0]	ram_axi_bresp;
+wire [1:0]	ram_axi_rresp;
+
+//pico to sorter mem axi wires
+wire        cpu_to_sort_ram_axi_awvalid;
+wire        cpu_to_sort_ram_axi_awready;
+wire [31:0] cpu_to_sort_ram_axi_awaddr;
+wire [ 2:0] cpu_to_sort_ram_axi_awprot;
+
+wire        cpu_to_sort_ram_axi_wvalid;
+wire        cpu_to_sort_ram_axi_wready;
+wire [31:0] cpu_to_sort_ram_axi_wdata;
+wire [ 3:0] cpu_to_sort_ram_axi_wstrb;
+
+wire        cpu_to_sort_ram_axi_bvalid;
+wire        cpu_to_sort_ram_axi_bready;
+
+wire        cpu_to_sort_ram_axi_arvalid;
+wire        cpu_to_sort_ram_axi_arready;
+wire [31:0] cpu_to_sort_ram_axi_araddr;
+wire [ 2:0] cpu_to_sort_ram_axi_arprot;
+
+wire        cpu_to_sort_ram_axi_rvalid;
+wire        cpu_to_sort_ram_axi_rready;
+wire [31:0] cpu_to_sort_ram_axi_rdata;
+wire [1:0]	cpu_to_sort_ram_axi_bresp;
+wire [1:0]	cpu_to_sort_ram_axi_rresp;
+
+//uart axi wires
+wire        uart_axi_awvalid;
+wire        uart_axi_awready;
+wire [31:0] uart_axi_awaddr;
+wire [ 2:0] uart_axi_awprot;
+
+wire        uart_axi_wvalid;
+wire        uart_axi_wready;
+wire [31:0] uart_axi_wdata;
+wire [ 3:0] uart_axi_wstrb;
+
+wire        uart_axi_bvalid;
+wire        uart_axi_bready;
+
+wire        uart_axi_arvalid;
+wire        uart_axi_arready;
+wire [31:0] uart_axi_araddr;
+wire [ 2:0] uart_axi_arprot;
+
+wire        uart_axi_rvalid;
+wire        uart_axi_rready;
+wire [31:0] uart_axi_rdata;
+wire [1:0]	uart_axi_bresp;
+wire [1:0]	uart_axi_rresp;
 
 picorv32_axi #(
 	.ENABLE_COUNTERS     (ENABLE_COUNTERS     ),
@@ -153,32 +261,240 @@ picorv32_axi #(
 		.trace_data     (trace_data     )
 	);
 
-axil_ram #
+pico_to_mems_and_uart #(
+    .DATA_WIDTH(WIDTH_P),
+    .ADDR_WIDTH(WIDTH_P),
+    .M00_BASE_ADDR(ROM_ADDRESS),
+    .M01_BASE_ADDR(RAM_ADDRESS),
+    .M02_ADDR_WIDTH(SORT_ADDRESS),
+    .M03_BASE_ADDR(UART_ADDRESS)
+)
+pico_to_memory_and_uart_interconnect_inst
+(
+    .clk(clk_i),
+    .rst(reset_i),
+    
+	//pico mem bus
+    .s00_axil_awaddr(mem_axi_awaddr),
+    .s00_axil_awprot(mem_axi_awprot),
+    .s00_axil_awvalid(mem_axi_awvalid),
+    .s00_axil_awready(mem_axi_awready),
+    .s00_axil_wdata(mem_axi_wdata),
+    .s00_axil_wstrb(mem_axi_wstrb),
+    .s00_axil_wvalid(mem_axi_wvalid),
+    .s00_axil_wready(mem_axi_wready),
+    .s00_axil_bresp(mem_axi_bresp),
+    .s00_axil_bvalid(mem_axi_bvalid),
+    .s00_axil_bready(mem_axi_bready),
+    .s00_axil_araddr(mem_axi_araddr),
+	.s00_axil_arprot(mem_axi_arprot),
+    .s00_axil_arvalid(mem_axi_arvalid),
+    .s00_axil_arready(mem_axi_arready),
+    .s00_axil_rdata(mem_axi_rdata),
+    .s00_axil_rresp(mem_axi_rresp),
+    .s00_axil_rvalid(mem_axi_rvalid),
+    .s00_axil_rready(mem_axi_rready),
+
+	//rom bus
+	.m00_axil_awaddr(rom_axi_awaddr),
+    .m00_axil_awprot(rom_axi_awprot),
+    .m00_axil_awvalid(rom_axi_awvalid),
+    .m00_axil_awready(rom_axi_awready),
+    .m00_axil_wdata(rom_axi_wdata),
+    .m00_axil_wstrb(rom_axi_wstrb),
+    .m00_axil_wvalid(rom_axi_wvalid),
+    .m00_axil_wready(rom_axi_wready),
+    .m00_axil_bresp(rom_axi_bresp),
+    .m00_axil_bvalid(rom_axi_bvalid),
+    .m00_axil_bready(rom_axi_bready),
+    .m00_axil_araddr(rom_axi_araddr),
+    .m00_axil_arprot(rom_axi_arprot),
+    .m00_axil_arvalid(rom_axi_arvalid),
+    .m00_axil_arready(rom_axi_arready),
+    .m00_axil_rdata(rom_axi_rdata),
+    .m00_axil_rresp(rom_axi_rresp),
+    .m00_axil_rvalid(rom_axi_rvalid),
+	.m00_axil_rready(rom_axi_rready),
+
+	//ram mem bus
+    .m01_axil_awaddr(ram_axi_awaddr),
+    .m01_axil_awprot(ram_axi_awprot),
+    .m01_axil_awvalid(ram_axi_awvalid),
+    .m01_axil_awready(ram_axi_awready),
+    .m01_axil_wdata(ram_axi_wdata),
+    .m01_axil_wstrb(ram_axi_wstrb),
+	.m01_axil_wvalid(ram_axi_wvalid),
+    .m01_axil_wready(ram_axi_wready),
+    .m01_axil_bresp(ram_axi_bresp),
+    .m01_axil_bvalid(ram_axi_bvalid),
+    .m01_axil_bready(ram_axi_bready),
+    .m01_axil_araddr(ram_axi_araddr),
+    .m01_axil_arprot(ram_axi_arprot),
+    .m01_axil_arvalid(ram_axi_arvalid),
+    .m01_axil_arready(ram_axi_arready),
+    .m01_axil_rdata(ram_axi_rdata),
+    .m01_axil_rresp(ram_axi_rresp),
+    .m01_axil_rvalid(ram_axi_rvalid),
+    .m01_axil_rready(ram_axi_rready),
+
+	//sorter ram mem bus
+    .m02_axil_awaddr(cpu_to_sort_ram_axi_awaddr),
+    .m02_axil_awprot(cpu_to_sort_ram_axi_awprot),
+    .m02_axil_awvalid(cpu_to_sort_ram_axi_awvalid),
+    .m02_axil_awready(cpu_to_sort_ram_axi_awready),
+    .m02_axil_wdata(cpu_to_sort_ram_axi_wdata),
+    .m02_axil_wstrb(cpu_to_sort_ram_axi_wstrb),
+    .m02_axil_wvalid(cpu_to_sort_ram_axi_wvalid),
+    .m02_axil_wready(cpu_to_sort_ram_axi_wready),
+    .m02_axil_bresp(cpu_to_sort_ram_axi_bresp),
+    .m02_axil_bvalid(cpu_to_sort_ram_axi_bvalid),
+    .m02_axil_bready(cpu_to_sort_ram_axi_bready),
+    .m02_axil_araddr(cpu_to_sort_ram_axi_araddr),
+    .m02_axil_arprot(cpu_to_sort_ram_axi_arprot),
+    .m02_axil_arvalid(cpu_to_sort_ram_axi_arvalid),
+    .m02_axil_arready(cpu_to_sort_ram_axi_arready),
+    .m02_axil_rdata(cpu_to_sort_ram_axi_rdata),
+    .m02_axil_rresp(cpu_to_sort_ram_axi_rresp),
+    .m02_axil_rvalid(cpu_to_sort_ram_axi_rvalid),
+    .m02_axil_rready(cpu_to_sort_ram_axi_rready),
+
+	//uart
+    .m03_axil_awaddr(uart_axi_awaddr),
+    .m03_axil_awprot(uart_axi_awprot),
+	.m03_axil_awvalid(uart_axi_awvalid),
+    .m03_axil_awready(uart_axi_awready),
+    .m03_axil_wdata(uart_axi_wdata),
+    .m03_axil_wstrb(uart_axi_wstrb),
+    .m03_axil_wvalid(uart_axi_wvalid),
+    .m03_axil_wready(uart_axi_wready),
+    .m03_axil_bresp(uart_axi_bresp),
+    .m03_axil_bvalid(uart_axi_bvalid),
+    .m03_axil_bready(uart_axi_bready),
+	.m03_axil_araddr(uart_axi_araddr),
+    .m03_axil_arprot(uart_axi_arprot),
+    .m03_axil_arvalid(uart_axi_arvalid),
+    .m03_axil_arready(uart_axi_arready),
+    .m03_axil_rdata(uart_axi_rdata),
+    .m03_axil_rresp(uart_axi_rresp),
+    .m03_axil_rvalid(uart_axi_rvalid),
+    .m03_axil_rready(uart_axi_rready)
+);
+
+axil_rom #
 (
     .DATA_WIDTH(WIDTH_P),
     .ADDR_WIDTH(DEPTH_P),
 	.filename_p(instruction_memory_file)
-) memory_inst (
+) instruction_memory_inst (
     .clk(clk_i),
     .rst(reset_i),
-    .s_axil_awaddr(mem_axi_awaddr),
-    .s_axil_awprot(mem_axi_awprot),
-    .s_axil_awvalid(mem_axi_awvalid),
-	.s_axil_awready(mem_axi_awready),
-    .s_axil_wdata(mem_axi_wdata),
-    .s_axil_wstrb(mem_axi_wstrb),
-    .s_axil_wvalid(mem_axi_wvalid),
-    .s_axil_wready(mem_axi_wready),
-	.s_axil_bresp(),	//unused
-    .s_axil_bvalid(mem_axi_bvalid),
-    .s_axil_bready(mem_axi_bready),
-    .s_axil_araddr(mem_axi_araddr),
-    .s_axil_arprot(mem_axi_arprot),
-    .s_axil_arvalid(mem_axi_arvalid),
-    .s_axil_arready(mem_axi_arready),
-    .s_axil_rdata(mem_axi_rdata),
-    .s_axil_rresp(),		//unused
-    .s_axil_rvalid(mem_axi_rvalid),
-	.s_axil_rready(mem_axi_rready)
+    .s_axil_awaddr(rom_axi_awaddr),
+    .s_axil_awprot(rom_axi_awprot),
+    .s_axil_awvalid(rom_axi_awvalid),
+	.s_axil_awready(rom_axi_awready),
+    .s_axil_wdata(rom_axi_wdata),
+    .s_axil_wstrb(rom_axi_wstrb),
+    .s_axil_wvalid(rom_axi_wvalid),
+    .s_axil_wready(rom_axi_wready),
+	.s_axil_bresp(rom_axi_bresp),
+    .s_axil_bvalid(rom_axi_bvalid),
+    .s_axil_bready(rom_axi_bready),
+    .s_axil_araddr(rom_axi_araddr),
+    .s_axil_arprot(rom_axi_arprot),
+    .s_axil_arvalid(rom_axi_arvalid),
+    .s_axil_arready(rom_axi_arready),
+    .s_axil_rdata(rom_axi_rdata),
+    .s_axil_rresp(rom_axi_rresp),
+    .s_axil_rvalid(rom_axi_rvalid),
+	.s_axil_rready(rom_axi_rready)
 );
+
+axil_ram #
+(
+    .DATA_WIDTH(WIDTH_P),
+    .ADDR_WIDTH(DEPTH_P)
+) pico_memory_inst (
+    .clk(clk_i),
+    .rst(reset_i),
+    .s_axil_awaddr(ram_axi_awaddr),
+    .s_axil_awprot(ram_axi_awprot),
+    .s_axil_awvalid(ram_axi_awvalid),
+	.s_axil_awready(ram_axi_awready),
+    .s_axil_wdata(ram_axi_wdata),
+    .s_axil_wstrb(ram_axi_wstrb),
+    .s_axil_wvalid(ram_axi_wvalid),
+    .s_axil_wready(ram_axi_wready),
+	.s_axil_bresp(ram_axi_bresp),
+    .s_axil_bvalid(ram_axi_bvalid),
+    .s_axil_bready(ram_axi_bready),
+    .s_axil_araddr(ram_axi_araddr),
+    .s_axil_arprot(ram_axi_arprot),
+    .s_axil_arvalid(ram_axi_arvalid),
+    .s_axil_arready(ram_axi_arready),
+    .s_axil_rdata(ram_axi_rdata),
+    .s_axil_rresp(ram_axi_rresp),
+    .s_axil_rvalid(ram_axi_rvalid),
+	.s_axil_rready(ram_axi_rready)
+);
+
+axil_ram #
+(
+    .DATA_WIDTH(WIDTH_P),
+    .ADDR_WIDTH(DEPTH_P)
+) sorter_memory_inst (
+    .clk(clk_i),
+    .rst(reset_i),
+    .s_axil_awaddr(cpu_to_sort_ram_axi_awaddr),
+    .s_axil_awprot(cpu_to_sort_ram_axi_awprot),
+    .s_axil_awvalid(cpu_to_sort_ram_axi_awvalid),
+	.s_axil_awready(cpu_to_sort_ram_axi_awready),
+    .s_axil_wdata(cpu_to_sort_ram_axi_wdata),
+    .s_axil_wstrb(cpu_to_sort_ram_axi_wstrb),
+    .s_axil_wvalid(cpu_to_sort_ram_axi_wvalid),
+    .s_axil_wready(cpu_to_sort_ram_axi_wready),
+	.s_axil_bresp(cpu_to_sort_ram_axi_bresp),
+    .s_axil_bvalid(cpu_to_sort_ram_axi_bvalid),
+    .s_axil_bready(cpu_to_sort_ram_axi_bready),
+    .s_axil_araddr(cpu_to_sort_ram_axi_araddr),
+    .s_axil_arprot(cpu_to_sort_ram_axi_arprot),
+    .s_axil_arvalid(cpu_to_sort_ram_axi_arvalid),
+    .s_axil_arready(cpu_to_sort_ram_axi_arready),
+    .s_axil_rdata(cpu_to_sort_ram_axi_rdata),
+    .s_axil_rresp(cpu_to_sort_ram_axi_rresp),
+    .s_axil_rvalid(cpu_to_sort_ram_axi_rvalid),
+	.s_axil_rready(cpu_to_sort_ram_axi_rready)
+);
+
+axiluart #(
+		.INITIAL_SETUP(31'd25),
+		.C_AXI_ADDR_WIDTH(WIDTH_P)
+) axi_uart_inst(
+		.S_AXI_ACLK(clk_i),
+		.S_AXI_ARESETN(!reset_i),
+		.S_AXI_AWVALID(uart_axi_awvalid),
+		.S_AXI_AWREADY(uart_axi_awready),
+		.S_AXI_AWADDR(uart_axi_awaddr),
+		.S_AXI_AWPROT(uart_axi_awprot),
+		.S_AXI_WVALID(uart_axi_wvalid),
+		.S_AXI_WREADY(uart_axi_wready),
+		.S_AXI_WDATA(uart_axi_wdata),
+		.S_AXI_WSTRB(uart_axi_wstrb),
+		.S_AXI_BVALID(uart_axi_bvalid),
+		.S_AXI_BREADY(uart_axi_bready),
+		.S_AXI_BRESP(uart_axi_bresp),
+		.S_AXI_ARVALID(uart_axi_arvalid),
+		.S_AXI_ARREADY(uart_axi_arready),
+		.S_AXI_ARADDR(uart_axi_araddr),
+		.S_AXI_ARPROT(uart_axi_arprot),
+		.S_AXI_RVALID(uart_axi_rvalid),
+		.S_AXI_RREADY(uart_axi_rready),
+		.S_AXI_RDATA(uart_axi_rdata),
+		.S_AXI_RRESP(uart_axi_rresp),
+		.i_uart_rx(1'b1),
+		.o_uart_tx(tx_o),
+		.i_cts_n(1'b0)
+);
+
+assign led = {mem_axi_bresp, mem_axi_rresp};
+
 endmodule
