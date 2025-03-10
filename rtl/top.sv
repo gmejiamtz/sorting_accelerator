@@ -31,7 +31,7 @@ localparam [31:0] MASKED_IRQ = 32'h 0000_0000;
 localparam [31:0] LATCHED_IRQ = 32'h ffff_ffff;
 localparam [31:0] PROGADDR_RESET = 32'h 0000_0000;
 localparam [31:0] PROGADDR_IRQ = 32'h 0000_0000;
-localparam [31:0] STACKADDR = 32'h 0000_2000;
+localparam [31:0] STACKADDR = 32'h 0100_5000;
 
 //picorv32 instruction parameters
 localparam DEPTH_P = 16; //only use 13 bits tho

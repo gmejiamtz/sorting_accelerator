@@ -1,0 +1,190 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Mon Mar 10 10:32:19 2025
+[*]
+[dumpfile] "/workspaces/sorting_accelerator/dump.fst"
+[dumpfile_mtime] "Mon Mar 10 10:24:33 2025"
+[dumpfile_size] 12452607
+[savefile] "/workspaces/sorting_accelerator/dump_save.gtkw"
+[timestart] 1360000000
+[size] 1440 698
+[pos] -436 -94
+*-32.533047 6330290000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] ulx3s_tb.
+[treeopen] ulx3s_tb.ulx3s_runner.
+[treeopen] ulx3s_tb.ulx3s_runner.uut.
+[sst_width] 276
+[signals_width] 286
+[sst_expanded] 1
+[sst_vpaned_height] 192
+@200
+-Runner Signals
+@28
+ulx3s_tb.ulx3s_runner.clk_i
+ulx3s_tb.ulx3s_runner.ebreak_found
+@22
+ulx3s_tb.ulx3s_runner.led[3:0]
+@28
+ulx3s_tb.ulx3s_runner.reset_i
+ulx3s_tb.ulx3s_runner.tx_o
+@200
+-Pico Mem Bus
+@22
+ulx3s_tb.ulx3s_runner.uut.mem_axi_araddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.mem_axi_arprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.mem_axi_arready
+ulx3s_tb.ulx3s_runner.uut.mem_axi_arvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.mem_axi_awaddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.mem_axi_awprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.mem_axi_awready
+ulx3s_tb.ulx3s_runner.uut.mem_axi_awvalid
+ulx3s_tb.ulx3s_runner.uut.mem_axi_bready
+ulx3s_tb.ulx3s_runner.uut.mem_axi_bresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.mem_axi_bvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.mem_axi_rdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.mem_axi_rready
+ulx3s_tb.ulx3s_runner.uut.mem_axi_rresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.mem_axi_rvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.mem_axi_wdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.mem_axi_wready
+@22
+ulx3s_tb.ulx3s_runner.uut.mem_axi_wstrb[3:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.mem_axi_wvalid
+@200
+-ROM Bus
+@22
+ulx3s_tb.ulx3s_runner.uut.rom_axi_araddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.rom_axi_arprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.rom_axi_arready
+ulx3s_tb.ulx3s_runner.uut.rom_axi_arvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.rom_axi_awaddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.rom_axi_awprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.rom_axi_awready
+ulx3s_tb.ulx3s_runner.uut.rom_axi_awvalid
+ulx3s_tb.ulx3s_runner.uut.rom_axi_bready
+ulx3s_tb.ulx3s_runner.uut.rom_axi_bresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.rom_axi_bvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.rom_axi_rdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.rom_axi_rready
+ulx3s_tb.ulx3s_runner.uut.rom_axi_rresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.rom_axi_rvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.rom_axi_wdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.rom_axi_wready
+@22
+ulx3s_tb.ulx3s_runner.uut.rom_axi_wstrb[3:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.rom_axi_wvalid
+@200
+-RAM Bus
+@22
+ulx3s_tb.ulx3s_runner.uut.ram_axi_araddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.ram_axi_arprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.ram_axi_arready
+ulx3s_tb.ulx3s_runner.uut.ram_axi_arvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.ram_axi_awaddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.ram_axi_awprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.ram_axi_awready
+ulx3s_tb.ulx3s_runner.uut.ram_axi_awvalid
+ulx3s_tb.ulx3s_runner.uut.ram_axi_bready
+ulx3s_tb.ulx3s_runner.uut.ram_axi_bresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.ram_axi_bvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.ram_axi_rdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.ram_axi_rready
+ulx3s_tb.ulx3s_runner.uut.ram_axi_rresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.ram_axi_rvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.ram_axi_wdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.ram_axi_wready
+@22
+ulx3s_tb.ulx3s_runner.uut.ram_axi_wstrb[3:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.ram_axi_wvalid
+ulx3s_tb.ulx3s_runner.uut.pico_memory_inst.mem_rd_en
+ulx3s_tb.ulx3s_runner.uut.pico_memory_inst.mem_wr_en
+@200
+-Sorter RAM Bus
+@22
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_araddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_arprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_arready
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_arvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_awaddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_awprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_awready
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_awvalid
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_bready
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_bresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_bvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_rdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_rready
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_rresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_rvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_wdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_wready
+@22
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_wstrb[3:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_wvalid
+ulx3s_tb.ulx3s_runner.uut.sorter_memory_inst.mem_rd_en
+ulx3s_tb.ulx3s_runner.uut.sorter_memory_inst.mem_wr_en
+@201
+-UART Bus
+@22
+ulx3s_tb.ulx3s_runner.uut.uart_axi_araddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.uart_axi_arprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.uart_axi_arready
+ulx3s_tb.ulx3s_runner.uut.uart_axi_arvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.uart_axi_awaddr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.uart_axi_awprot[2:0]
+ulx3s_tb.ulx3s_runner.uut.uart_axi_awready
+ulx3s_tb.ulx3s_runner.uut.uart_axi_awvalid
+ulx3s_tb.ulx3s_runner.uut.uart_axi_bready
+ulx3s_tb.ulx3s_runner.uut.uart_axi_bresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.uart_axi_bvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.uart_axi_rdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.uart_axi_rready
+ulx3s_tb.ulx3s_runner.uut.uart_axi_rresp[1:0]
+ulx3s_tb.ulx3s_runner.uut.uart_axi_rvalid
+@22
+ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.uart_axi_wready
+@22
+ulx3s_tb.ulx3s_runner.uut.uart_axi_wstrb[3:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.uart_axi_wvalid
+[pattern_trace] 1
+[pattern_trace] 0
