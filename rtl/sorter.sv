@@ -84,8 +84,8 @@ end
 
 // ALT FOR LOOP
 
-    // 2 CYCLE COUNT
-logic [2:0] cycle_count_d, cycle_count_q;
+    // CYCLE COUNT
+logic [3:0] cycle_count_d, cycle_count_q;
 
 
 logic [$clog2(DATA_ENTRIES):0]  for_i_addr_d, for_i_addr_q;
@@ -151,13 +151,13 @@ logic [$clog2(DATA_ENTRIES):0]  sort_addr;
 logic [0:0]                     sort_rw_en;
 logic [0:0]                     sort_request;
 
-logic [0:0]                     testflag;
+logic [1:0]                     testflag;
 
 always_comb begin
     cycle_count_d = cycle_count_q;
     data_min_d = data_min_q;
     data_comp_d = data_comp_q;
-    testflag = 1'b0;
+    testflag = 2'b00;
 
     if (sort_en && for_i_addr_q != (DATA_ENTRIES - 1)) begin
         if (for_j_addr_q == (DATA_ENTRIES - 1)) begin
@@ -197,31 +197,44 @@ always_comb begin
             sort_addr = for_j_addr_q;
             data_comp_d = read_data_mem;
             data_min_d = data_min_q;
-            if (cycle_count_q == 6) begin               // Test for Swapping
+            if (cycle_count_q >= 6) begin               // Test for Swapping
                 if (data_comp_q < data_min_q) begin     // Swap
-                    // if (cycle_count_q != 7) begin    
-                    //     testflag = 1'b1;
-                    //     sort_data_i = data_comp_q;
-                    //     sort_rw_en = 1'b1;
-                    //     sort_request = 1'b1;
-                    //     sort_addr = for_j_addr_q;
-                    //     cycle_count_d = cycle_count_q + 1;
-                    // end else begin
-                    //     testflag = 1'b1;
-                    //     sort_data_i = data_min_q;
-                    //     sort_rw_en = 1'b1;
-                    //     sort_request = 1'b1;
-                    //     sort_addr = for_i_addr_q;
-                    //     cycle_count_d = 3'd0;
-                    // end
-                    testflag = 1'b1;
+                    min = for_i_addr_q;
+                    if (cycle_count_q < 8) begin    
+                        testflag = 2'b01;
+                        sort_data_i = data_comp_q;
+                        sort_rw_en = 1'b1;
+                        sort_request = 1'b1;
+                        sort_addr = min;
+                        cycle_count_d = cycle_count_q + 1;
+                    end else if (cycle_count_q < 10) begin // This part keeps failing :/
+                        testflag = 2'b10;
+                        sort_data_i = data_min_q;
+                        sort_rw_en = 1'b1;
+                        sort_request = 1'b1;
+                        sort_addr = for_j_addr_q;
+                        cycle_count_d = cycle_count_q + 1;
+                    end else begin
+                        testflag = 2'b00;
+                        sort_data_i = '0;
+                        sort_rw_en = 1'b0;
+                        sort_request = 1'b0;
+                        sort_addr = '0;
+                        cycle_count_d = 3'd0;           // Reset the Cycle
+                    end
+                    testflag = 2'b01;
                 end else begin                          // Don't Swap
-                    testflag = 1'b0;
+                    if (cycle_count_q < 10) begin
+                        cycle_count_d = 3'd0;
+                    end else begin
+                        cycle_count_d = cycle_count_q + 1;
+                    end
+                    testflag = 2'b00;
                 end
-                cycle_count_d = 3'd0;                   // Reset the Cycle
+                // cycle_count_d = 3'd0;                   
             end else begin                              // Wait until Data Comp is Valid
                 cycle_count_d = cycle_count_q + 1;
-                testflag = 1'b0;
+                testflag = 2'b00;
             end
         end
     end else begin
