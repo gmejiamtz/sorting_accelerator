@@ -13,7 +13,7 @@ module ulx3s (
 wire clk;
 
 (* FREQUENCY_PIN_CLKI="25" *)
-(* FREQUENCY_PIN_CLKOP="32.256" *)
+(* FREQUENCY_PIN_CLKOP="100" *)
 (* ICP_CURRENT="12" *) (* LPF_RESISTOR="8" *) (* MFG_ENABLE_FILTEROPAMP="1" *) (* MFG_GMCREF_SEL="2" *)
 EHXPLLL #(
         .PLLRST_ENA("DISABLED"),
@@ -24,13 +24,13 @@ EHXPLLL #(
         .OUTDIVIDER_MUXB("DIVB"),
         .OUTDIVIDER_MUXC("DIVC"),
         .OUTDIVIDER_MUXD("DIVD"),
-        .CLKI_DIV(7),               //Refclk divisor
+        .CLKI_DIV(1),               //Refclk divisor
         .CLKOP_ENABLE("ENABLED"),
-        .CLKOP_DIV(19),              //clkout0 divisor
+        .CLKOP_DIV(6),              //clkout0 divisor
         .CLKOP_CPHASE(2),
         .CLKOP_FPHASE(0),
         .FEEDBK_PATH("CLKOP"),
-        .CLKFB_DIV(9)   //Feedback Divisor
+        .CLKFB_DIV(4)   //Feedback Divisor
     ) pll (
         .RST(1'b0),
         .STDBY(1'b0),

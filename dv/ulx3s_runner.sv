@@ -7,7 +7,7 @@ logic tx_o;
 logic [3:0] led;
 logic ebreak_found;
 
-parameter realtime ClockPeriod = 20ns;
+parameter realtime ClockPeriod = 10ns;
 
 initial begin
     clk_i = 0;

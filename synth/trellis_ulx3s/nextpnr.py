@@ -1,3 +1,3 @@
 
 ctx.addClock('clkin', 25)
-ctx.addClock('clk', 50)
+ctx.addClock('clk', 100)

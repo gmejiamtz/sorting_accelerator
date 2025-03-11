@@ -188,6 +188,12 @@ wire [31:0] uart_axi_rdata;
 wire [1:0]	uart_axi_bresp;
 wire [1:0]	uart_axi_rresp;
 
+//uart fifo wires
+
+wire [7:0] uart_fifo_m_axis_tdata;
+wire       uart_fifo_m_axis_tvalid;
+wire       uart_fifo_m_axis_tready;
+
 picorv32_axi #(
 	.ENABLE_COUNTERS     (ENABLE_COUNTERS     ),
 	.ENABLE_COUNTERS64   (ENABLE_COUNTERS64   ),
@@ -261,15 +267,14 @@ picorv32_axi #(
 		.trace_data     (trace_data     )
 	);
 
-pico_to_mems_and_uart #(
+pico_to_mems #(
     .DATA_WIDTH(WIDTH_P),
     .ADDR_WIDTH(WIDTH_P),
     .M00_BASE_ADDR(ROM_ADDRESS),
     .M01_BASE_ADDR(RAM_ADDRESS),
-    .M02_BASE_ADDR(SORT_ADDRESS),
-    .M03_BASE_ADDR(UART_ADDRESS)
+    .M02_BASE_ADDR(SORT_ADDRESS)
 )
-pico_to_memory_and_uart_interconnect_inst
+pico_to_memories_interconnect_inst
 (
     .clk(clk_i),
     .rst(reset_i),
@@ -356,28 +361,7 @@ pico_to_memory_and_uart_interconnect_inst
     .m02_axil_rdata(cpu_to_sort_ram_axi_rdata),
     .m02_axil_rresp(cpu_to_sort_ram_axi_rresp),
     .m02_axil_rvalid(cpu_to_sort_ram_axi_rvalid),
-    .m02_axil_rready(cpu_to_sort_ram_axi_rready),
-
-	//uart
-    .m03_axil_awaddr(uart_axi_awaddr),
-    .m03_axil_awprot(uart_axi_awprot),
-	.m03_axil_awvalid(uart_axi_awvalid),
-    .m03_axil_awready(uart_axi_awready),
-    .m03_axil_wdata(uart_axi_wdata),
-    .m03_axil_wstrb(uart_axi_wstrb),
-    .m03_axil_wvalid(uart_axi_wvalid),
-    .m03_axil_wready(uart_axi_wready),
-    .m03_axil_bresp(uart_axi_bresp),
-    .m03_axil_bvalid(uart_axi_bvalid),
-    .m03_axil_bready(uart_axi_bready),
-	.m03_axil_araddr(uart_axi_araddr),
-    .m03_axil_arprot(uart_axi_arprot),
-    .m03_axil_arvalid(uart_axi_arvalid),
-    .m03_axil_arready(uart_axi_arready),
-    .m03_axil_rdata(uart_axi_rdata),
-    .m03_axil_rresp(uart_axi_rresp),
-    .m03_axil_rvalid(uart_axi_rvalid),
-    .m03_axil_rready(uart_axi_rready)
+    .m02_axil_rready(cpu_to_sort_ram_axi_rready)
 );
 
 axil_rom #
@@ -465,10 +449,43 @@ axil_ram #
 	.s_axil_rready(cpu_to_sort_ram_axi_rready)
 );
 
+axis_fifo #(.DEPTH(256),
+            .LAST_ENABLE(0)
+) stdout_buffer_fifo_inst (
+    .clk(clk_i),
+    .rst(reset_i),
+
+    //from cpu
+    .s_axis_tdata(mem_axi_wdata[7:0] & {8{mem_axi_awaddr == (UART_ADDRESS | 32'hBEE0)}}),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(mem_axi_wready & mem_axi_wvalid & (mem_axi_awaddr == (UART_ADDRESS | 32'hBEE0))),
+    .s_axis_tready(),   //maybe unsused?
+    .s_axis_tlast(mem_axi_wready & mem_axi_wvalid & (mem_axi_awaddr == (UART_ADDRESS | 32'hBEE0))),
+    .s_axis_tid(8'h0),
+    .s_axis_tdest(8'h0),
+    .s_axis_tuser(8'h0),
+
+    //from and to uart
+    .m_axis_tdata(uart_fifo_m_axis_tdata),
+    .m_axis_tvalid(uart_fifo_m_axis_tvalid),
+    .m_axis_tready(uart_fifo_m_axis_tready)
+);
+
+uart_tx #() stdout_uart_tx_inst (
+    .clk(clk_i),
+    .rst(reset_i),
+    .s_axis_tdata(uart_fifo_m_axis_tdata),
+    .s_axis_tvalid(uart_fifo_m_axis_tvalid),
+    .s_axis_tready(uart_fifo_m_axis_tready),
+    .txd(tx_o),
+    .prescale(16'd1085)
+);
+
+/*
 axiluart #(
 		.INITIAL_SETUP(31'd25),
 		.C_AXI_ADDR_WIDTH(WIDTH_P)
-) axi_uart_inst(
+) stdout_inst(
 		.S_AXI_ACLK(clk_i),
 		.S_AXI_ARESETN(!reset_i),
 		.S_AXI_AWVALID(uart_axi_awvalid),
@@ -494,6 +511,7 @@ axiluart #(
 		.o_uart_tx(tx_o),
 		.i_cts_n(1'b0)
 );
+*/
 
 assign led = {mem_axi_bresp, mem_axi_rresp};
 

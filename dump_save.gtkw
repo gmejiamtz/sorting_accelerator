@@ -1,18 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
-[*] Mon Mar 10 10:32:19 2025
+[*] Mon Mar 10 20:47:47 2025
 [*]
 [dumpfile] "/workspaces/sorting_accelerator/dump.fst"
-[dumpfile_mtime] "Mon Mar 10 10:24:33 2025"
-[dumpfile_size] 12452607
+[dumpfile_mtime] "Mon Mar 10 20:37:53 2025"
+[dumpfile_size] 12370434
 [savefile] "/workspaces/sorting_accelerator/dump_save.gtkw"
-[timestart] 1360000000
+[timestart] 29213478900
 [size] 1440 698
-[pos] -436 -94
-*-32.533047 6330290000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-16.723671 29213710000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] ulx3s_tb.
 [treeopen] ulx3s_tb.ulx3s_runner.
 [treeopen] ulx3s_tb.ulx3s_runner.uut.
+[treeopen] ulx3s_tb.ulx3s_runner.uut.picorv32_axi_core.
 [sst_width] 276
 [signals_width] 286
 [sst_expanded] 1
@@ -58,6 +59,13 @@ ulx3s_tb.ulx3s_runner.uut.mem_axi_wready
 ulx3s_tb.ulx3s_runner.uut.mem_axi_wstrb[3:0]
 @28
 ulx3s_tb.ulx3s_runner.uut.mem_axi_wvalid
+@200
+-Pico Debug Signals
+@820
+ulx3s_tb.ulx3s_runner.uut.picorv32_axi_core.picorv32_core.dbg_ascii_state[127:0]
+ulx3s_tb.ulx3s_runner.uut.picorv32_axi_core.picorv32_core.dbg_insn_addr[31:0]
+@28
+ulx3s_tb.ulx3s_runner.uut.picorv32_axi_core.picorv32_core.dbg_mem_instr
 @200
 -ROM Bus
 @22
@@ -155,7 +163,7 @@ ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_wstrb[3:0]
 ulx3s_tb.ulx3s_runner.uut.cpu_to_sort_ram_axi_wvalid
 ulx3s_tb.ulx3s_runner.uut.sorter_memory_inst.mem_rd_en
 ulx3s_tb.ulx3s_runner.uut.sorter_memory_inst.mem_wr_en
-@201
+@200
 -UART Bus
 @22
 ulx3s_tb.ulx3s_runner.uut.uart_axi_araddr[31:0]
@@ -178,7 +186,44 @@ ulx3s_tb.ulx3s_runner.uut.uart_axi_rdata[31:0]
 ulx3s_tb.ulx3s_runner.uut.uart_axi_rready
 ulx3s_tb.ulx3s_runner.uut.uart_axi_rresp[1:0]
 ulx3s_tb.ulx3s_runner.uut.uart_axi_rvalid
-@22
+@8000a3
+ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+@29
+(0)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(1)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(2)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(3)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(4)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(5)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(6)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(7)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(8)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(9)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(10)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(11)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(12)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(13)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(14)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(15)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(16)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(17)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(18)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(19)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(20)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(21)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(22)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(23)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(24)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(25)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(26)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(27)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(28)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(29)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(30)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+(31)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+@1001201
+-group_end
+@8a0
 ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
 @28
 ulx3s_tb.ulx3s_runner.uut.uart_axi_wready
@@ -186,5 +231,7 @@ ulx3s_tb.ulx3s_runner.uut.uart_axi_wready
 ulx3s_tb.ulx3s_runner.uut.uart_axi_wstrb[3:0]
 @28
 ulx3s_tb.ulx3s_runner.uut.uart_axi_wvalid
+ulx3s_tb.ulx3s_runner.uut.axi_uart_inst.o_uart_tx
+ulx3s_tb.ulx3s_runner.uut.axi_uart_inst.o_uart_tx_int
 [pattern_trace] 1
 [pattern_trace] 0
