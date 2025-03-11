@@ -57,4 +57,11 @@ task run_until_ebreak;
         @(posedge clk_i); //simulate one more cycle to see the proper trap behavior
     end
 endtask
+
+task dump_stdout_buffer;
+    while(~uut.stdout_buffer_fifo_inst.empty) begin
+        @(posedge clk_i);
+    end
+endtask
+
 endmodule

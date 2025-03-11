@@ -15,6 +15,8 @@ initial begin
     ulx3s_runner.reset();
     ulx3s_runner.wait_n_cycles(2);
     ulx3s_runner.run_until_ebreak();
+    $display("Dumping stdout buffer.");
+    ulx3s_runner.dump_stdout_buffer();
     $display( "End simulation." );
     $finish;
 end
