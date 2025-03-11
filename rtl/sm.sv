@@ -1,13 +1,13 @@
 module sm import config_pkg::*;
 #(
-    parameter RSC_p = 2, //clk 133MHz
+    parameter RSC_p = 2, //clk 133MHz -> i think it should be 166MHz actualy
     parameter RP_p = 2, //15ns
     parameter RCD_p = 2, 
     parameter XSR_p = 75, //min of 72, making it 75 for some leeway
-    parameter REF_p = 0, //temp
+    parameter REF_p = 0, //temp -> should just be 64ms/(1/166M)
     parameter burst_len_p = 8,
     parameter data_len_p = 0, //temp
-    parameter cas_laten_p = 2 
+    parameter cas_laten_p = 2 //should be 3 i think -> also why is this not being used anywhere lmao
 )(
     input   logic   [0:0]   clk_i,
     input   logic   [0:0]   rst_i,
@@ -180,7 +180,7 @@ module sm import config_pkg::*;
                 end
             end
 
-            PC_activ: begin
+            PC_ACTIV: begin
                 ic_l = 4'b0111;
 
                 if (trp_cnt_q >= 2'b10) begin
@@ -257,7 +257,7 @@ module sm import config_pkg::*;
                 end
             end
             
-            PC_deactiv: begin
+            PC_DEACTIV: begin
                 ic = 4'b0111;
                 
                 if (trp_cnt_q >= 2'b10) begin
