@@ -1,19 +1,18 @@
 [*]
 [*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
-[*] Mon Mar 10 20:47:47 2025
+[*] Tue Mar 11 19:41:03 2025
 [*]
 [dumpfile] "/workspaces/sorting_accelerator/dump.fst"
-[dumpfile_mtime] "Mon Mar 10 20:37:53 2025"
-[dumpfile_size] 12370434
+[dumpfile_mtime] "Tue Mar 11 19:33:08 2025"
+[dumpfile_size] 99587971
 [savefile] "/workspaces/sorting_accelerator/dump_save.gtkw"
-[timestart] 29213478900
+[timestart] 0
 [size] 1440 698
 [pos] -1 -1
-*-16.723671 29213710000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-35.524567 18700000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] ulx3s_tb.
 [treeopen] ulx3s_tb.ulx3s_runner.
 [treeopen] ulx3s_tb.ulx3s_runner.uut.
-[treeopen] ulx3s_tb.ulx3s_runner.uut.picorv32_axi_core.
 [sst_width] 276
 [signals_width] 286
 [sst_expanded] 1
@@ -165,73 +164,16 @@ ulx3s_tb.ulx3s_runner.uut.sorter_memory_inst.mem_rd_en
 ulx3s_tb.ulx3s_runner.uut.sorter_memory_inst.mem_wr_en
 @200
 -UART Bus
-@22
-ulx3s_tb.ulx3s_runner.uut.uart_axi_araddr[31:0]
 @28
-ulx3s_tb.ulx3s_runner.uut.uart_axi_arprot[2:0]
-ulx3s_tb.ulx3s_runner.uut.uart_axi_arready
-ulx3s_tb.ulx3s_runner.uut.uart_axi_arvalid
-@22
-ulx3s_tb.ulx3s_runner.uut.uart_axi_awaddr[31:0]
+ulx3s_tb.ulx3s_runner.uut.stdout_buffer_fifo_inst.full
+ulx3s_tb.ulx3s_runner.uut.stdout_buffer_fifo_inst.empty
+@820
+ulx3s_tb.ulx3s_runner.uut.stdout_uart_tx_inst.s_axis_tdata[7:0]
 @28
-ulx3s_tb.ulx3s_runner.uut.uart_axi_awprot[2:0]
-ulx3s_tb.ulx3s_runner.uut.uart_axi_awready
-ulx3s_tb.ulx3s_runner.uut.uart_axi_awvalid
-ulx3s_tb.ulx3s_runner.uut.uart_axi_bready
-ulx3s_tb.ulx3s_runner.uut.uart_axi_bresp[1:0]
-ulx3s_tb.ulx3s_runner.uut.uart_axi_bvalid
-@22
-ulx3s_tb.ulx3s_runner.uut.uart_axi_rdata[31:0]
-@28
-ulx3s_tb.ulx3s_runner.uut.uart_axi_rready
-ulx3s_tb.ulx3s_runner.uut.uart_axi_rresp[1:0]
-ulx3s_tb.ulx3s_runner.uut.uart_axi_rvalid
-@8000a3
-ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+ulx3s_tb.ulx3s_runner.uut.stdout_uart_tx_inst.s_axis_tvalid
 @29
-(0)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(1)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(2)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(3)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(4)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(5)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(6)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(7)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(8)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(9)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(10)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(11)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(12)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(13)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(14)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(15)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(16)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(17)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(18)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(19)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(20)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(21)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(22)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(23)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(24)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(25)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(26)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(27)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(28)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(29)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(30)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-(31)ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
-@1001201
--group_end
-@8a0
-ulx3s_tb.ulx3s_runner.uut.uart_axi_wdata[31:0]
+ulx3s_tb.ulx3s_runner.uut.stdout_uart_tx_inst.s_axis_tready
 @28
-ulx3s_tb.ulx3s_runner.uut.uart_axi_wready
-@22
-ulx3s_tb.ulx3s_runner.uut.uart_axi_wstrb[3:0]
-@28
-ulx3s_tb.ulx3s_runner.uut.uart_axi_wvalid
-ulx3s_tb.ulx3s_runner.uut.axi_uart_inst.o_uart_tx
-ulx3s_tb.ulx3s_runner.uut.axi_uart_inst.o_uart_tx_int
+ulx3s_tb.ulx3s_runner.uut.stdout_uart_tx_inst.txd
 [pattern_trace] 1
 [pattern_trace] 0

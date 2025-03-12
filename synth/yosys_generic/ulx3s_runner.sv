@@ -32,22 +32,35 @@ task automatic reset;
     reset_i <= 0;
 endtask
 
-task automatic set_a_i(input [0:0] arg_i);
-    a_i <= arg_i;
-endtask
-
-task automatic set_b_i(input [0:0] arg_i);
-    b_i <= arg_i;
-endtask
-
-task automatic set_c_i(input [0:0] arg_i);
-    c_i <= arg_i;
-endtask
-
 task automatic wait_n_cycles(integer n);
     repeat (n) begin
         @(posedge clk_i);
     end
 endtask
+
+task automatic peek_memory_bus;
+    $display("Memory Read Addr(%h) | Memory Read Data: (%h)",uut.picorv32_axi_core.mem_axi_araddr,uut.picorv32_axi_core.mem_axi_rdata);
+endtask
+
+task run_until_ebreak;
+    ebreak_found = uut.picorv32_axi_core.mem_axi_rdata == 32'h00100073;
+    while (~uut.picorv32_axi_core.trap & ~ebreak_found) begin
+        @(posedge clk_i);
+    end
+    if (~uut.picorv32_axi_core.trap) begin
+        $info("Trap is illegally");
+        peek_memory_bus();
+    end else begin
+        $info("Ebreak found, main is returning/terminating properly");
+        @(posedge clk_i); //simulate one more cycle to see the proper trap behavior
+    end
+endtask
+
+task dump_stdout_buffer;
+    while(~uut.stdout_buffer_fifo_inst.empty) begin
+        @(posedge clk_i);
+    end
+endtask
+
 
 endmodule

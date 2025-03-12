@@ -6,14 +6,14 @@
 module ulx3s (
     input wire clk_25mhz,  // Main clock input (25MHz)
     input wire reset_ni,
-    input wire ftdi_txd,
-    output reg [3:0] led,
+    output wire ftdi_rxd,
+    output reg [7:0] led,
 );
 
 wire clk;
 
 (* FREQUENCY_PIN_CLKI="25" *)
-(* FREQUENCY_PIN_CLKOP="100" *)
+(* FREQUENCY_PIN_CLKOP="50" *)
 (* ICP_CURRENT="12" *) (* LPF_RESISTOR="8" *) (* MFG_ENABLE_FILTEROPAMP="1" *) (* MFG_GMCREF_SEL="2" *)
 EHXPLLL #(
         .PLLRST_ENA("DISABLED"),
@@ -26,11 +26,11 @@ EHXPLLL #(
         .OUTDIVIDER_MUXD("DIVD"),
         .CLKI_DIV(1),               //Refclk divisor
         .CLKOP_ENABLE("ENABLED"),
-        .CLKOP_DIV(6),              //clkout0 divisor
+        .CLKOP_DIV(12),              //clkout0 divisor
         .CLKOP_CPHASE(2),
         .CLKOP_FPHASE(0),
         .FEEDBK_PATH("CLKOP"),
-        .CLKFB_DIV(4)   //Feedback Divisor
+        .CLKFB_DIV(2)   //Feedback Divisor
     ) pll (
         .RST(1'b0),
         .STDBY(1'b0),
@@ -48,6 +48,6 @@ EHXPLLL #(
         .LOCK(locked)
 	);
 
-top top_inst (.clk(clk), .rst(!reset_ni), .tx_o(ftdi_txd),.led(led));
+top top_inst (.clk_i(clk), .reset_i(!reset_ni), .tx_o(ftdi_rxd),.led(led));
 
 endmodule

@@ -2,7 +2,7 @@ module top(
     input clk_i,
     input reset_i,
     output tx_o,
-	output [3:0] led
+	output [7:0] led
 );
 
 //picorv32 core parameters
@@ -478,7 +478,7 @@ uart_tx #() stdout_uart_tx_inst (
     .s_axis_tvalid(uart_fifo_m_axis_tvalid),
     .s_axis_tready(uart_fifo_m_axis_tready),
     .txd(tx_o),
-    .prescale(16'd1085)
+    .prescale(16'd55)
 );
 
 /*
@@ -513,6 +513,11 @@ axiluart #(
 );
 */
 
-assign led = {mem_axi_bresp, mem_axi_rresp};
+//mem axi response busses
+assign led[3:0] = {mem_axi_bresp, mem_axi_rresp};
 
+//ebreak found
+assign led[6] = mem_axi_rdata == 32'h00100073;
+assign led[7] = trap;
+assign led[5:4] = 2'b0;
 endmodule

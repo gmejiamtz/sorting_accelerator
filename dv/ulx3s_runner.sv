@@ -4,7 +4,7 @@ module ulx3s_runner;
 logic clk_i;
 logic reset_i;
 logic tx_o;
-logic [3:0] led;
+logic [7:0] led;
 logic ebreak_found;
 
 parameter realtime ClockPeriod = 10ns;
@@ -45,12 +45,11 @@ task automatic peek_memory_bus;
 endtask
 
 task run_until_ebreak;
-    ebreak_found = uut.picorv32_axi_core.mem_axi_rdata == 32'h00100073;
-    while (~uut.picorv32_axi_core.trap & ~ebreak_found) begin
+    while (~|led[7:6]) begin
         @(posedge clk_i);
     end
-    if (~uut.picorv32_axi_core.trap) begin
-        $info("Trap is illegally");
+    if (led[7]) begin
+        $info("Trap is illegally found!");
         peek_memory_bus();
     end else begin
         $info("Ebreak found, main is returning/terminating properly");

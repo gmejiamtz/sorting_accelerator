@@ -59,7 +59,7 @@ synth/trellis_ulx3s/build/synth.v synth/trellis_ulx3s/build/synth.json: synth/bu
 	yosys -p 'tcl synth/trellis_ulx3s/yosys.tcl' -l synth/trellis_ulx3s/build/yosys.log
 
 synth/trellis_ulx3s/build/ulx3s.config: synth/trellis_ulx3s/build/synth.json synth/trellis_ulx3s/nextpnr.py synth/trellis_ulx3s/nextpnr_ecp5.lpf
-	nextpnr-ecp5 --12k --json synth/trellis_ulx3s/build/synth.json \
+	nextpnr-ecp5 --85k --json synth/trellis_ulx3s/build/synth.json \
 	 --pre-pack synth/trellis_ulx3s/nextpnr.py \
 	 --package CABGA381 \
 	 --lpf synth/trellis_ulx3s/nextpnr_ecp5.lpf \
