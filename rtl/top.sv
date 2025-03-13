@@ -201,6 +201,9 @@ wire [7:0] uart_fifo_m_axis_tdata;
 wire       uart_fifo_m_axis_tvalid;
 wire       uart_fifo_m_axis_tready;
 
+//stdout done
+wire stdout_done;
+
 picorv32_axi #(
 	.ENABLE_COUNTERS     (ENABLE_COUNTERS     ),
 	.ENABLE_COUNTERS64   (ENABLE_COUNTERS64   ),
@@ -560,7 +563,8 @@ assign led[3:0] = {mem_axi_bresp, mem_axi_rresp};
 //ebreak found
 assign led[6] = mem_axi_rdata == 32'h00100073;
 assign led[7] = trap;
-assign led[5:4] = 2'b0;
+assign led[5] = stdout_done;
+assign led[4] = 1'b0;
 
 //assign pcpi_inst_info
 
@@ -569,4 +573,6 @@ assign pcpi_insn_func7 = pcpi_insn[31:25];
 
 //assign unused inputs
 assign irq = '0;
+
+assign stdout_done = trap & !uart_fifo_m_axis_tvalid & uart_fifo_m_axis_tready;
 endmodule
