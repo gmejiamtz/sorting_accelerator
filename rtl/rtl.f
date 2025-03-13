@@ -24,4 +24,5 @@ rtl/axil_rom.v
 rtl/config_pkg.sv
 rtl/pico_to_mems_and_uart.v
 rtl/pico_to_mems.v
+rtl/pcpi_counter.sv
 rtl/top.sv

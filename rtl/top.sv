@@ -18,7 +18,7 @@ localparam [0:0] TWO_CYCLE_ALU = 0;
 localparam [0:0] COMPRESSED_ISA = 0;
 localparam [0:0] CATCH_MISALIGN = 1;
 localparam [0:0] CATCH_ILLINSN = 1;
-localparam [0:0] ENABLE_PCPI = 0;		//for sorter and uart out
+localparam [0:0] ENABLE_PCPI = 1;		//for sorter and uart out
 localparam [0:0] ENABLE_MUL = 1;
 localparam [0:0] ENABLE_FAST_MUL = 0;
 localparam [0:0] ENABLE_DIV = 1;
@@ -43,6 +43,10 @@ localparam ROM_ADDRESS = 32'h0;
 localparam RAM_ADDRESS = 32'h0100_0000;
 localparam SORT_ADDRESS = 32'h1000_0000;
 localparam UART_ADDRESS = 32'h1100_0000;
+
+//sorting instruction opcode and func7
+localparam SORT_INST_OPCODE = 7'b0110011;
+localparam SORT_INST_FUNCT7 = 7'b1000000;
 
 //picorv32 wires
 wire        mem_axi_awvalid;
@@ -79,6 +83,10 @@ wire         pcpi_wr;
 wire  [31:0] pcpi_rd;
 wire         pcpi_wait;
 wire         pcpi_ready;
+
+//pcpi inst decode logic
+wire [6:0] pcpi_insn_opcode;
+wire [6:0] pcpi_insn_func7;
 
 //picorv32 interrupt bus this is unused
 wire  [31:0] irq;
@@ -241,6 +249,14 @@ picorv32_axi #(
 		.mem_axi_rvalid (mem_axi_rvalid ),
 		.mem_axi_rready (mem_axi_rready ),
 		.mem_axi_rdata  (mem_axi_rdata  ),
+        .pcpi_valid(pcpi_valid),
+        .pcpi_insn(pcpi_insn),
+        .pcpi_rs1(pcpi_rs1),
+        .pcpi_rs2(pcpi_rs2),
+        .pcpi_wr(pcpi_wr),
+        .pcpi_rd(pcpi_rd),
+        .pcpi_wait(pcpi_wait),
+        .pcpi_ready(pcpi_ready),
 		.irq            (irq            ),
 `ifdef RISCV_FORMAL
 		.rvfi_valid     (rvfi_valid     ),
@@ -481,6 +497,18 @@ uart_tx #() stdout_uart_tx_inst (
     .prescale(16'd55)
 );
 
+pcpi_counter #(.WIDTH_P(5)) pcpi_counter_inst(
+    .clk_i(clk_i),
+    .reset_i(reset_i),
+    .pcpi_valid(pcpi_valid & (pcpi_insn_opcode == SORT_INST_OPCODE) & (pcpi_insn_func7 == SORT_INST_FUNCT7)),
+    .pcpi_insn(pcpi_insn),
+    .pcpi_rs1(pcpi_rs1),
+    .pcpi_rs2(pcpi_rs2),
+    .pcpi_rd(pcpi_rd),
+    .pcpi_wait(pcpi_wait),
+    .pcpi_ready(pcpi_ready)
+);
+
 /*
 axiluart #(
 		.INITIAL_SETUP(31'd25),
@@ -520,4 +548,9 @@ assign led[3:0] = {mem_axi_bresp, mem_axi_rresp};
 assign led[6] = mem_axi_rdata == 32'h00100073;
 assign led[7] = trap;
 assign led[5:4] = 2'b0;
+
+//assign pcpi_inst_info
+
+assign pcpi_insn_opcode = pcpi_insn[6:0];
+assign pcpi_insn_func7 = pcpi_insn[31:25];
 endmodule
