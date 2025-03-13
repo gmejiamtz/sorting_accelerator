@@ -1,5 +1,5 @@
 
-TOP := ulx3s_tb
+TOP := sdram_tb
 
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
 export YOSYS_DATDIR := $(shell yosys-config --datdir)

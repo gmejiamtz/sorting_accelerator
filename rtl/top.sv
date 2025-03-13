@@ -29,7 +29,7 @@ module top(
     always_comb begin
         bank_sel_o = {BS1, BS0};
         if (!rw_en_i) begin // We're reading, so taking in data from SDRAM
-            data_io = 8'bz;
+            data_io = 16'bz;
         end else begin      // We're writing, so sending data to SDRAM
             data_io = m_data_i;
         end

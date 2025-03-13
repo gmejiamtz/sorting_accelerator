@@ -75,8 +75,12 @@ dut(
 
 initial begin
 $dumpfile("sdram.vcd");
-$dumpvars(0);
-#1000
+$dumpvars();
+#100
+reset_i = 1'b1;
+@(posedge clk_i);
+reset_i = 1'b0;
+
 //handle ready valid signals 
 //bank select already handled
 addr_i = 13'b0;
@@ -84,7 +88,12 @@ addr_i = 13'b0;
 // rw_en_i = 1'b1;
 #1
 go_i = 1'b1;
-
+//for read
+rw_en_i = 1'b0;
+read_valid_i = 1'b1;
+#10000
+$display("test");
+$finish();
 end
 
 endmodule

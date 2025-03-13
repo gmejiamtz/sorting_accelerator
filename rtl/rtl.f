@@ -6,3 +6,6 @@ rtl/config_pkg.sv
 
 rtl/top.sv
 rtl/sm.sv
+rtl/config_pkg.sv
+
+

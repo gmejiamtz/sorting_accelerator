@@ -1,10 +1,10 @@
 module sm import config_pkg::*;
-#(
+#(  
     parameter RSC_p = 2, //clk 133MHz -> i think it should be 166MHz actualy
     parameter RP_p = 2, //15ns
     parameter RCD_p = 2, 
     parameter XSR_p = 75, //min of 72, making it 75 for some leeway
-    parameter REF_p = 0, //temp -> should just be 64ms/(1/166M)
+    parameter REF_p = 1, //temp -> should just be 64ms/(1/166M)
     parameter burst_len_p = 8,
     parameter data_len_p = 0, //temp
     parameter cas_laten_p = 2 //should be 3 i think -> also why is this not being used anywhere lmao
@@ -36,7 +36,7 @@ module sm import config_pkg::*;
     always_ff @(posedge clk_i) begin
         if (rst_i || trp_cnt_rst) begin
             trp_cnt_q <= 1'b0;
-        end else if (state_q == PC) begin
+        end else if (state_q == PC_ACTIV) begin
             //will change later to be better
             trp_cnt_q <= trp_cnt_q + 1;
         end 
@@ -83,7 +83,7 @@ module sm import config_pkg::*;
     end    
 
 //XSR TIMER
-    logic [0:0] txsr_cnt_rst;
+    logic [0:0] txsr_cnt_rst, xsr_flag;
     //maybe it should be clog2(xsr_p)-1, but the earlier cases cant be -1 so we'll stay consistent *for now*
     logic [$clog2(XSR_p):0] txsr_cnt_d, txsr_cnt_q;
 
@@ -114,10 +114,10 @@ module sm import config_pkg::*;
     logic [0:0] tread_flag;
     always_ff @(posedge clk_i) begin
         if (rst_i || tread_cas_rst) begin
-            tread_cas_q <= 0;
+            tread_cas_del_q <= 0;
         end else if ((state_q == READ) & tread_flag) begin
             //will change later to be better
-            tread_cas_q <= tread_cas_d + 1;
+            tread_cas_del_q <= tread_cas_del_d + 1;
         end 
     end 
 
@@ -135,14 +135,18 @@ module sm import config_pkg::*;
         end 
     end 
 
-    state_t [2:0] state_d, state_q;
+    state_t state_d, state_q;
     always_ff @(posedge clk_i) begin
-        if (rst_i) state_q <= 3'd0;
+        if (rst_i) state_q <= INIT;
         else state_q <= state_d;
     end
 
-
-    assign ic_l = {ic_CS_o, ic_RAS_o, ic_CAS_o, ic_WE_o};
+    logic [3:0] ic_l;
+    assign ic_CS_o = ic_l[3];
+    assign ic_RAS_o = ic_l[2];
+    assign ic_CAS_o = ic_l[1];
+    assign ic_WE_o = ic_l[0];
+    //assign ic_l = {ic_CS_o, ic_RAS_o, ic_CAS_o, ic_WE_o};
 
     always_comb begin
         state_d = state_q;
@@ -164,6 +168,8 @@ module sm import config_pkg::*;
 
         read_ready_o = 1'b0;
         write_valid_o = 1'b0;
+
+        ic_l = 4'b0000;
         
         case(state_q)
             INIT: begin
@@ -171,7 +177,7 @@ module sm import config_pkg::*;
 
                 //remember to include timer values
                 if (go_i) begin
-                    state_d = PC_activ;
+                    state_d = PC_ACTIV;
                     ic_l = 4'b0010;
                     trp_cnt_rst = 1'b1;
                 end else begin
@@ -188,7 +194,7 @@ module sm import config_pkg::*;
                     ic_l = 4'b0000;
                     trsc_cnt_rst = 1'b1;
                 end else begin
-                    state_d = PC_activ;
+                    state_d = PC_ACTIV;
                     ic_l = 4'b0111;
                 end
             end
@@ -227,7 +233,7 @@ module sm import config_pkg::*;
                     //tread_cnt_rst = 1'b1; // Might not want? It'll reset immediately, but not get through 2nd if statement in time b4 goes to 0
                     tread_flag = 1'b1;
                     if (tread_cas_del_q >= 2) begin
-                        state_d = PC_deactiv;
+                        state_d = PC_DEACTIV;
                         read_ready_o = 1'b1;
                         tread_cas_rst = 1'b1;
                         tread_cnt_rst = 1'b1;
@@ -247,7 +253,7 @@ module sm import config_pkg::*;
                 ic_l = 4'b0111;
 
                 if (twrite_cnt_q >= burst_len_p) begin
-                    state_d = PC_deactiv;
+                    state_d = PC_DEACTIV;
                     write_valid_o = 1'b1;
                     twrite_cnt_rst = 1'b1;
                     ic_l = 4'b0010;
@@ -258,7 +264,7 @@ module sm import config_pkg::*;
             end
             
             PC_DEACTIV: begin
-                ic = 4'b0111;
+                ic_l = 4'b0111;
                 
                 if (trp_cnt_q >= 2'b10) begin
                     state_d = SR;
@@ -266,7 +272,7 @@ module sm import config_pkg::*;
                     ic_CKE_o = 1'b0;
                     trsc_cnt_rst = 1'b1;
                 end else begin
-                    state_d = PC_deactiv;
+                    state_d = PC_DEACTIV;
                     ic_l = 4'b0111;
                 end
             end
@@ -292,7 +298,7 @@ module sm import config_pkg::*;
                     ic_CKE_o = 1'b0;
                 end
             end
-
+        default: state_d = INIT;
         endcase
     end
 
