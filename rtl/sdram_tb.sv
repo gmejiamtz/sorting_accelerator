@@ -21,7 +21,7 @@ logic [0:0] CKE_o;
 logic [15:0] m_data_o;
 logic [12:0] addr_o;
 
-logic [15:0] data_io;
+wire [15:0] data_io;
 
 
 //clock period is gonna be 7.5188 for 166mhz clock
@@ -59,28 +59,30 @@ dut(
     .data_io     (data_io)
 );
 
-W9825G6KH 
-dut (
-    .Dq    (data_io),
-    .Addr  (addr_o),
-    .Bs    (bank_sel_o),
-    .Clk   (clk_i),
-    .Cke   (CKE_o),
-    .Cs_n  (CS_o),
-    .Ras_n (RAS_o),
-    .Cas_n (CAS_o),
-    .We_n  (WE_o),
-    .Dqm   ('b0) 
-);
+// W9825G6KH 
+// dut (
+//     .Dq    (data_io),
+//     .Addr  (addr_o),
+//     .Bs    (bank_sel_o),
+//     .Clk   (clk_i),
+//     .Cke   (CKE_o),
+//     .Cs_n  (CS_o),
+//     .Ras_n (RAS_o),
+//     .Cas_n (CAS_o),
+//     .We_n  (WE_o),
+//     .Dqm   ('b0) 
+// );
 
 initial begin
-#100
+$dumpfile("sdram.vcd");
+$dumpvars(0);
+#1000
 //handle ready valid signals 
 //bank select already handled
 addr_i = 13'b0;
 //design assumes constant rw_en_i
-rw_en_i = 1'b1;
-#5
+// rw_en_i = 1'b1;
+#1
 go_i = 1'b1;
 
 end

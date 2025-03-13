@@ -142,7 +142,7 @@ module sm import config_pkg::*;
     end
 
 
-    ic_l = {ic_CS_o, ic_RAS_o, ic_CAS_o, ic_WE_o};
+    assign ic_l = {ic_CS_o, ic_RAS_o, ic_CAS_o, ic_WE_o};
 
     always_comb begin
         state_d = state_q;

@@ -19,7 +19,7 @@ module top(
     output  logic   [15:0]   m_data_o, // Data going out of memory controller
     output  logic   [12:0]  addr_o,
     
-    inout   logic   [15:0]  data_io;        
+    inout   logic   [15:0]  data_io       
     // inout           [7:0]   data_io
 );
 
