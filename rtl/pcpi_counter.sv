@@ -13,7 +13,7 @@ module pcpi_counter #(
     output         logic pcpi_ready
 );
 
-typedef enum logic[1:0] {IDLE,COUNT} state_t;
+typedef enum logic[0:0] {IDLE,COUNT} state_t;
 assign pcpi_rd = '0;
 logic [WIDTH_P-1:0] count_q,count_d;
 state_t state_q,state_d;
@@ -51,6 +51,7 @@ always_comb begin : count
         end
         COUNT: begin
             pcpi_wait = '1;
+            pcpi_wr = '0;
             if(&count_q) begin
                 state_d = IDLE;
                 pcpi_ready = '1;

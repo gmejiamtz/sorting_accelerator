@@ -10,7 +10,6 @@ localparam [0:0] ENABLE_COUNTERS = 1;
 localparam [0:0] ENABLE_COUNTERS64 = 1;
 localparam [0:0] ENABLE_REGS_16_31 = 1;
 localparam [0:0] ENABLE_REGS_DUALPORT = 1;
-localparam [0:0] LATCHED_MEM_RDATA = 0;
 localparam [0:0] TWO_STAGE_SHIFT = 1;
 localparam [0:0] BARREL_SHIFTER = 0;
 localparam [0:0] TWO_CYCLE_COMPARE = 0;
@@ -257,7 +256,8 @@ picorv32_axi #(
         .pcpi_rd(pcpi_rd),
         .pcpi_wait(pcpi_wait),
         .pcpi_ready(pcpi_ready),
-		.irq            (irq            ),
+		.irq(irq),
+        .eoi(),
 `ifdef RISCV_FORMAL
 		.rvfi_valid     (rvfi_valid     ),
 		.rvfi_order     (rvfi_order     ),
@@ -480,7 +480,18 @@ axis_fifo #(.DEPTH(256),
     .s_axis_tid(8'h0),
     .s_axis_tdest(8'h0),
     .s_axis_tuser(8'h0),
-
+    .status_good_frame(),
+    .status_bad_frame(),
+    .status_overflow(),
+    .status_depth_commit(),
+    .status_depth(),
+    .pause_ack(),
+    .pause_req(1'b0),
+    .m_axis_tuser(),
+    .m_axis_tdest(),
+    .m_axis_tid(),
+    .m_axis_tlast(),
+    .m_axis_tkeep(),
     //from and to uart
     .m_axis_tdata(uart_fifo_m_axis_tdata),
     .m_axis_tvalid(uart_fifo_m_axis_tvalid),
@@ -494,6 +505,7 @@ uart_tx #() stdout_uart_tx_inst (
     .s_axis_tvalid(uart_fifo_m_axis_tvalid),
     .s_axis_tready(uart_fifo_m_axis_tready),
     .txd(tx_o),
+    .busy(),
     .prescale(16'd55)
 );
 
@@ -506,6 +518,7 @@ pcpi_counter #(.WIDTH_P(5)) pcpi_counter_inst(
     .pcpi_rs2(pcpi_rs2),
     .pcpi_rd(pcpi_rd),
     .pcpi_wait(pcpi_wait),
+    .pcpi_wr(pcpi_wr),
     .pcpi_ready(pcpi_ready)
 );
 
@@ -553,4 +566,7 @@ assign led[5:4] = 2'b0;
 
 assign pcpi_insn_opcode = pcpi_insn[6:0];
 assign pcpi_insn_func7 = pcpi_insn[31:25];
+
+//assign unused inputs
+assign irq = '0;
 endmodule
