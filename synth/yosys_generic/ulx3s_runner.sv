@@ -3,10 +3,8 @@ module ulx3s_runner;
 
 logic clk_i;
 logic reset_i;
-logic a_i;
-logic b_i;
-logic c_i;
-logic d_o;
+logic tx_o;
+logic [7:0] led;
 
 parameter realtime ClockPeriod = 20ns;
 
@@ -18,22 +16,25 @@ initial begin
     end
 end
 
-ulx3s_sim ulx3s_sim (.*);
-
-always @(posedge d_o) $info("Register on");
-always @(negedge d_o) $info("Register off");
+top uut (
+    .clk_i(clk_i),
+    .reset_i(reset_i),
+    .tx_o(tx_o),
+    .led(led)
+);
 
 task automatic reset;
     reset_i <= 1;
-    a_i <= '0;
-    b_i <= '0;
-    c_i <= '0;
-    @(posedge clk_i);
+    //reset for 5 cycles
+    repeat (5) begin
+        @(posedge clk_i);
+    end
     reset_i <= 0;
 endtask
 
 task automatic wait_n_cycles(integer n);
     repeat (n) begin
+        //peek_memory_bus();
         @(posedge clk_i);
     end
 endtask
@@ -43,13 +44,12 @@ task automatic peek_memory_bus;
 endtask
 
 task run_until_ebreak;
-    ebreak_found = uut.picorv32_axi_core.mem_axi_rdata == 32'h00100073;
-    while (~uut.picorv32_axi_core.trap & ~ebreak_found) begin
+    while (~|led[7:6]) begin
         @(posedge clk_i);
     end
-    if (~uut.picorv32_axi_core.trap) begin
-        $info("Trap is illegally");
+    if (led[7]) begin
         peek_memory_bus();
+        $error("Trap is illegally found!");
     end else begin
         $info("Ebreak found, main is returning/terminating properly");
         @(posedge clk_i); //simulate one more cycle to see the proper trap behavior
@@ -57,10 +57,9 @@ task run_until_ebreak;
 endtask
 
 task dump_stdout_buffer;
-    while(~uut.stdout_buffer_fifo_inst.empty) begin
+    while(~led[5]) begin
         @(posedge clk_i);
     end
 endtask
-
 
 endmodule

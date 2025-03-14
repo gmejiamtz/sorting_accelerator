@@ -5,9 +5,8 @@ logic clk_i;
 logic reset_i;
 logic tx_o;
 logic [7:0] led;
-logic ebreak_found;
 
-parameter realtime ClockPeriod = 10ns;
+parameter realtime ClockPeriod = 20ns;
 
 initial begin
     clk_i = 0;
@@ -49,8 +48,8 @@ task run_until_ebreak;
         @(posedge clk_i);
     end
     if (led[7]) begin
-        $info("Trap is illegally found!");
         peek_memory_bus();
+        $error("Trap is illegally found!");
     end else begin
         $info("Ebreak found, main is returning/terminating properly");
         @(posedge clk_i); //simulate one more cycle to see the proper trap behavior
@@ -58,7 +57,7 @@ task run_until_ebreak;
 endtask
 
 task dump_stdout_buffer;
-    while(~uut.stdout_buffer_fifo_inst.empty) begin
+    while(~led[5]) begin
         @(posedge clk_i);
     end
 endtask

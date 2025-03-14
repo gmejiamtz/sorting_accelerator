@@ -564,7 +564,7 @@ assign led[3:0] = {mem_axi_bresp, mem_axi_rresp};
 assign led[6] = mem_axi_rdata == 32'h00100073;
 assign led[7] = trap;
 assign led[5] = stdout_done;
-assign led[4] = 1'b0;
+assign led[4] = ~trap;
 
 //assign pcpi_inst_info
 
