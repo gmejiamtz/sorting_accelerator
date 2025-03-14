@@ -1,13 +1,14 @@
+`timescale 1ns/1ps
 module sm import config_pkg::*;
 #(  
-    parameter RSC_p = 2, //clk 133MHz -> i think it should be 166MHz actualy
+    parameter RSC_p = 2, //clk 133MHz -> i think it should be 166MHz actualy 
     parameter RP_p = 2, //15ns
     parameter RCD_p = 2, 
     parameter XSR_p = 75, //min of 72, making it 75 for some leeway
-    parameter REF_p = 1, //temp -> should just be 64ms/(1/166M)
+    parameter REF_p = 1, //temp -> should just be 64ms/(1/133M)
     parameter burst_len_p = 8,
     parameter data_len_p = 0, //temp
-    parameter cas_laten_p = 2 //should be 3 i think -> also why is this not being used anywhere lmao
+    parameter cas_laten_p = 2 //maybe 3
 )(
     input   logic   [0:0]   clk_i,
     input   logic   [0:0]   rst_i,
@@ -146,6 +147,7 @@ module sm import config_pkg::*;
     assign ic_RAS_o = ic_l[2];
     assign ic_CAS_o = ic_l[1];
     assign ic_WE_o = ic_l[0];
+    //idk this was giving an error for some reason
     //assign ic_l = {ic_CS_o, ic_RAS_o, ic_CAS_o, ic_WE_o};
 
     always_comb begin

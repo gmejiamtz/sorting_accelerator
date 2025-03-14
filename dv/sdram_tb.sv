@@ -23,8 +23,13 @@ logic [12:0] addr_o;
 
 wire [15:0] data_io;
 
+//logic [15:0] data_io_l;
 
-//clock period is gonna be 7.5188 for 166mhz clock
+assign data_io = data_io_l;
+
+
+
+//clock period is gonna be 7.5188 for 133mhz clock
 parameter realtime ClockPeriod = 7.5188ns; //i think this is allowed, but i need to double check
 initial begin
     clk_i = 0;
@@ -76,22 +81,34 @@ dut(
 initial begin
 $dumpfile("sdram.vcd");
 $dumpvars();
-#100
+//#100
 reset_i = 1'b1;
 @(posedge clk_i);
 reset_i = 1'b0;
-
-//handle ready valid signals 
+#1
 //bank select already handled
 addr_i = 13'b0;
-//design assumes constant rw_en_i
-// rw_en_i = 1'b1;
-#1
+m_data_i = 16'b1;
 go_i = 1'b1;
+
 //for read
+rw_en_i = 1'b1;
+write_ready_i = 1'b1;
+
+
+//ill change this to be more precise later
+#1000
+//for write
+write_ready_i = 1'b0;
 rw_en_i = 1'b0;
 read_valid_i = 1'b1;
-#10000
+
+#100
+go_i = 0;
+#1000
+
+
+
 $display("test");
 $finish();
 end
