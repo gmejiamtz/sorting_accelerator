@@ -34,17 +34,15 @@ module axil_sorter #(
 
 always_comb begin
     axil_awaddr_o = cntl_addr * 4;
-    axil_awvalid_o = cntl_request;
+    axil_awvalid_o = read_out;
 
     axil_wdata_o = cntl_data_i;
-    axil_wvalid_o = cntl_request;
+    axil_wvalid_o = read_out;
 
     axil_bready_o = 1'b1;
 
     axil_araddr_o = cntl_addr * 4;
     axil_arvalid_o = cntl_request;
-
-    axil_rready_o = cntl_request;
 end
 
 logic [$clog2(DATA_ENTRIES):0] mem_addr_d, mem_addr_q;
@@ -70,6 +68,28 @@ always_ff @(posedge clk_i) begin
     end
 end
 
+logic [DATA_WIDTH-1:0]  read_data_mem;
+logic [0:0]             request_ready;
+pipelined_mem #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .NUM_ENTRIES(DATA_ENTRIES)
+)
+pipelined_mem (
+    .clk_i,
+    .rst_ni(!rst_i),
+    .request_ready_o(request_ready),
+    .request_valid_i(request_mem),
+    .request_write_not_read_i(cntl_rw_en),
+    .request_addr_i(cntl_addr),
+    .request_id_i(),
+    .request_w_data_i(cntl_data_i),
+    .read_ready_i(request_mem),
+    .read_valid_o(axil_rready_o),
+    .read_addr_o(),
+    .read_id_o(),
+    .read_data_o(read_data_mem)
+);
+
 // CONTROLLER
 logic [$clog2(DATA_ENTRIES):0]  cntl_addr;
 logic [0:0]                     cntl_rw_en;
@@ -91,8 +111,7 @@ always_comb begin
             cntl_addr = mem_addr_q;
             cntl_rw_en = rw_en;
             cntl_request = request_mem;
-            cntl_data_i = axil_rdata_i
-            ;
+            cntl_data_i = axil_rdata_i;
         end
     end
 end
