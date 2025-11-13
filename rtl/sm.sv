@@ -1,14 +1,14 @@
 `timescale 1ns/1ps
-module sm import config_pkg::*;
+module sm
 #(  
-    parameter RSC_p = 2, //clk 133MHz -> i think it should be 166MHz actualy 
-    parameter RP_p = 2, //15ns
-    parameter RCD_p = 2, 
+    parameter RSC_p = 10, //clk 133MHz -> i think it should be 166MHz actualy 
+    parameter RP_p = 13, //15ns
+    parameter RCD_p = 3, 
     parameter XSR_p = 75, //min of 72, making it 75 for some leeway
-    parameter REF_p = 1, //temp -> should just be 64ms/(1/133M)
+    parameter REF_p = 3, //temp -> should just be 64ms/(1/133M)
     parameter burst_len_p = 8,
     parameter data_len_p = 0, //temp
-    parameter cas_laten_p = 2 //maybe 3
+    parameter cas_laten_p = 3 //maybe 3
 )(
     input   logic   [0:0]   clk_i,
     input   logic   [0:0]   rst_i,
@@ -22,17 +22,27 @@ module sm import config_pkg::*;
     output  logic   [0:0]   ic_CAS_o,
     output  logic   [0:0]   ic_WE_o,
     output  logic   [0:0]   ic_CKE_o,
+    output  logic   [12:0]  addr_o,
 
     output  logic   [0:0]   read_ready_o,
     output  logic   [0:0]   write_valid_o
 );
 
+    localparam addr_cmd = 13'b000_011_0_011;
+
+    import config_pkg::*;
+
+    state_t state_d, state_q;
+    always_ff @(posedge clk_i) begin
+        if (rst_i) state_q <= INIT;
+        else state_q <= state_d;
+    end
 
 //fix parameter bus sizes im hella stupid lol, make them clog2ß
 
 //TRP TIMER
     logic [0:0] trp_cnt_rst;
-    logic [1:0] trp_cnt_d, trp_cnt_q;
+    logic [$clog2(RP_p):0] trp_cnt_d, trp_cnt_q;
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trp_cnt_rst) begin
@@ -136,12 +146,6 @@ module sm import config_pkg::*;
         end 
     end 
 
-    state_t state_d, state_q;
-    always_ff @(posedge clk_i) begin
-        if (rst_i) state_q <= INIT;
-        else state_q <= state_d;
-    end
-
     logic [3:0] ic_l;
     assign ic_CS_o = ic_l[3];
     assign ic_RAS_o = ic_l[2];
@@ -152,6 +156,7 @@ module sm import config_pkg::*;
 
     always_comb begin
         state_d = state_q;
+        addr_o = '0;
 
         //counter stuff here
         trp_cnt_rst = 1'b0;
@@ -163,6 +168,16 @@ module sm import config_pkg::*;
         tread_cnt_rst = 1'b0;
         tread_cas_rst = 1'b0;
         twrite_cnt_rst = 1'b0;
+
+        twrite_cnt_d = twrite_cnt_q;
+        tread_cas_del_d = tread_cas_del_q;
+        tread_cnt_d = tread_cnt_q;
+        txsr_cnt_d = txsr_cnt_q;
+        tref_cnt_d = tref_cnt_q;
+        trcd_cnt_d = trcd_cnt_q;
+        trsc_cnt_d = trsc_cnt_q;
+        trp_cnt_d = trp_cnt_q;
+
         tread_flag = 1'b0;
 
         ic_CKE_o = 1'b1;
@@ -181,6 +196,7 @@ module sm import config_pkg::*;
                 if (go_i) begin
                     state_d = PC_ACTIV;
                     ic_l = 4'b0010;
+                    addr_o[10] = 1'b1;
                     trp_cnt_rst = 1'b1;
                 end else begin
                     state_d = INIT;
@@ -191,9 +207,10 @@ module sm import config_pkg::*;
             PC_ACTIV: begin
                 ic_l = 4'b0111;
 
-                if (trp_cnt_q >= 2'b10) begin
+                if (trp_cnt_q >= (RP_p - 1)) begin
                     state_d = MR;
                     ic_l = 4'b0000;
+                    addr_o = addr_cmd;
                     trsc_cnt_rst = 1'b1;
                 end else begin
                     state_d = PC_ACTIV;
@@ -203,6 +220,7 @@ module sm import config_pkg::*;
 
             MR: begin 
                 ic_l = 4'b0111;
+                addr_o = '0; // addr_cmd
 
                 if (trsc_cnt_q >= RSC_p) begin
                     state_d = BA;
@@ -220,10 +238,10 @@ module sm import config_pkg::*;
                 if (trcd_cnt_q >= RCD_p) begin
                     if (rw_en_i && write_ready_i) begin 
                         state_d = WRITE;
-                        ic_l = 4'b0101;      
+                        ic_l = 4'b0100;      
                     end else if (!rw_en_i && read_valid_i) begin
                         state_d = READ;
-                        ic_l = 4'b0100;
+                        ic_l = 4'b0101;
                     end
                 end
             end
@@ -231,7 +249,7 @@ module sm import config_pkg::*;
             READ: begin
                 ic_l = 4'b0111;
 
-                if (tread_cnt_q >= burst_len_p) begin
+                if (tread_cnt_q >= (burst_len_p + RP_p - 1)) begin
                     //tread_cnt_rst = 1'b1; // Might not want? It'll reset immediately, but not get through 2nd if statement in time b4 goes to 0
                     tread_flag = 1'b1;
                     if (tread_cas_del_q >= 2) begin
@@ -253,13 +271,13 @@ module sm import config_pkg::*;
 
             WRITE: begin
                 ic_l = 4'b0111;
-
-                if (twrite_cnt_q >= burst_len_p) begin
+                if (twrite_cnt_q >= (burst_len_p + RP_p + 1)) begin
                     state_d = PC_DEACTIV;
                     write_valid_o = 1'b1;
                     twrite_cnt_rst = 1'b1;
                     ic_l = 4'b0010;
                 end else begin
+                    addr_o = {3'd0, twrite_cnt_q};
                     state_d = WRITE;
                     ic_l = 4'b0111;
                 end
@@ -268,9 +286,10 @@ module sm import config_pkg::*;
             PC_DEACTIV: begin
                 ic_l = 4'b0111;
                 
-                if (trp_cnt_q >= 2'b10) begin
+                if (trp_cnt_q >= (RP_p - 1)) begin
                     state_d = SR;
-                    ic_l = 4'b0001;
+                    ic_l = 4'b0010;
+                    addr_o[10] = 1'b1;
                     ic_CKE_o = 1'b0;
                     trsc_cnt_rst = 1'b1;
                 end else begin
