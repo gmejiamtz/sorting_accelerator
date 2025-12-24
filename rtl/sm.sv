@@ -1,3 +1,5 @@
+import config_pkg::*;
+
 `timescale 1ns/1ps
 module sm
 #(  
@@ -33,8 +35,6 @@ module sm
 
     localparam addr_cmd = 13'b000_011_0_011;
     localparam powerup_p = 167;
-
-    import config_pkg::*;
 
     state_t state_d, state_q;
     always_ff @(posedge clk_i) begin

@@ -2,7 +2,7 @@
 dv/dv_pkg.sv
 
 //dv/ulx3s_tb.sv
-dv/sdram_tb.sv
+// dv/sdram_tb.sv
 
 
 --timing
