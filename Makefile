@@ -57,7 +57,7 @@ synth/trellis_ulx3s/build/ulx3s.config: synth/trellis_ulx3s/build/synth.json syn
 	ecppack $< $@
 
 trellis_ulx3s_program: synth/trellis_ulx3s/build/ulx3s.bit
-	sudo $(shell which fujprog) $<
+	$(shell which fujprog) $<
 
 trellis_ulx3s_flash: synth/trellis_ulx3s/build/ulx3s.bit
 	sudo $(shell which fujprog) $<

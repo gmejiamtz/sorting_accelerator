@@ -9,3 +9,10 @@ ${YOSYS_DATDIR}/ecp5/cells_bb.v
 
 synth/trellis_ulx3s/build/synth.v
 synth/trellis_ulx3s/ulx3s_runner.sv
+
+rtl/top.sv
+rtl/sm.sv
+rtl/config_pkg.sv
+
+imports/Config-AC.v
+imports/W9825G6KH.nc.vp

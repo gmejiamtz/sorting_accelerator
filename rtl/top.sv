@@ -8,7 +8,7 @@ module top(
     input   logic   [0:0]   rw_en_i, // Assuming constant signal
     input   logic   [0:0]   read_valid_i,
     input   logic   [0:0]   write_ready_i,
-
+    input   logic   [12:0]  row_col_addr_i,
     output  logic   [0:0]   read_ready_o,
     output  logic   [0:0]   write_valid_o,
     output  logic   [1:0]   bank_sel_o,
@@ -19,6 +19,8 @@ module top(
     output  logic   [0:0]   CKE_o,
     output  logic   [15:0]  m_data_o, // Data going out of memory controller
     output  logic   [12:0]  addr_o,
+
+    output logic    [0:0]   refresh_o,
     
     inout   logic   [15:0]  data_io       
     // inout           [7:0]   data_io
@@ -31,9 +33,9 @@ module top(
 
     always_comb begin
         bank_sel_o = {BS1, BS0};
-        if (rw_en_i) begin // We're writing, so make all Z's
+        if (!rw_en_i) begin // We're reading, so make all Z's
             data_io_l = 16'bz;
-        end else begin      // We're reading, so do something
+        end else begin      // We're writing, so do something
             data_io_l = m_data_i;
         end
         m_data_o = data_io;
@@ -49,6 +51,7 @@ module top(
         .rw_en_i(rw_en_i),
         .read_valid_i(read_valid_i),
         .write_ready_i(write_ready_i),
+        .row_col_addr_i(row_col_addr_i),
         .ic_CS_o(CS_o),
         .ic_CAS_o(CAS_o),
         .ic_RAS_o(RAS_o),
@@ -56,7 +59,8 @@ module top(
         .ic_CKE_o(CKE_o),
         .read_ready_o(read_ready_o),
         .write_valid_o(write_valid_o),
-        .addr_o(addr_o)
+        .addr_o(addr_o),
+        .refresh_o(refresh_o)
     );
 
 

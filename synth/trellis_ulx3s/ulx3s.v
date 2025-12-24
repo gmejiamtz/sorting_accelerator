@@ -8,7 +8,7 @@ module ulx3s (
 wire clk;
 
 (* FREQUENCY_PIN_CLKI="25" *)
-(* FREQUENCY_PIN_CLKOP="50" *)
+(* FREQUENCY_PIN_CLKOP="166" *)
 (* ICP_CURRENT="12" *) (* LPF_RESISTOR="8" *) (* MFG_ENABLE_FILTEROPAMP="1" *) (* MFG_GMCREF_SEL="2" *)
 EHXPLLL #(
         .PLLRST_ENA("DISABLED"),
@@ -43,14 +43,14 @@ EHXPLLL #(
         .LOCK(locked)
 	);
 
-    top top_inst(
-        .clk_i(clk),
-        .reset_i(!reset_ni),
-        .a_i(btn[1]),
-        .b_i(btn[2]),
-        .c_i(btn[3]),
-        .d_o(led[0])
-    );
+    // top top_inst(
+    //     .clk_i(clk),
+    //     .reset_i(!reset_ni),
+    //     .a_i(btn[1]),
+    //     .b_i(btn[2]),
+    //     .c_i(btn[3]),
+    //     .d_o(led[0])
+    // );
     assign led[3:1] = btn[3:1];
 
 endmodule

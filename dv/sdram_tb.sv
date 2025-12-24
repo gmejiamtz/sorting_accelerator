@@ -18,8 +18,11 @@ logic [0:0] RAS_o;
 logic [0:0] CAS_o;
 logic [0:0] WE_o;
 logic [0:0] CKE_o;
+
+logic [0:0] refresh_o;
+
 logic [15:0] m_data_o;
-logic [12:0] addr_o;
+logic [12:0] row_col_addr_i, addr_o;
 
 wire [15:0] data_io;
 
@@ -51,6 +54,7 @@ dut(
     .rw_en_i        (rw_en_i),
     .read_valid_i   (read_valid_i),
     .write_ready_i  (write_ready_i),
+    .row_col_addr_i (row_col_addr_i),
     .read_ready_o   (read_ready_o),
     .write_valid_o  (write_valid_o),
     .bank_sel_o     (bank_sel_o),
@@ -61,6 +65,7 @@ dut(
     .CKE_o          (CKE_o),
     .m_data_o       (m_data_o),
     .addr_o         (addr_o),
+    .refresh_o      (refresh_o),
     .data_io        (data_io)
 );
 
@@ -87,6 +92,7 @@ task t_initial();
         write_ready_i = 1'b0;
         data_io_l = 'x;
         rw_en_i = 1'b0; // READ
+        row_col_addr_i = '0;
 
         @(negedge clk_i);
 
@@ -94,21 +100,26 @@ task t_initial();
         repeat(3) @(negedge clk_i);
         reset_i = 1'b0;
 
+        #1000;
+
+        
+    end
+endtask
+
+task t_write(input logic [12:0] row_col);
+    begin
         @(negedge clk_i);
         go_i = 1'b1;
+        rw_en_i = 1'b1;
 
         @(negedge clk_i);
         go_i = 1'b0;
 
-        #1000; // Enables Time for PC and BA
-    end
-endtask
-
-task t_write();
-    begin
+        @(posedge write_valid_o);
+        row_col_addr_i = row_col;
+        // repeat(166) @(negedge clk_i);
 
         @(negedge clk_i);
-        rw_en_i = 1'b1;
         write_ready_i = 1'b1;
         data_io_l = 'd10;
 
@@ -118,9 +129,71 @@ task t_write();
         @(negedge clk_i);
         data_io_l = 'd22;
 
-        @(negedge write_valid_o);
+        @(negedge refresh_o);
+        row_col_addr_i = '0;
         write_ready_i = 1'b0;
 
+    end
+endtask
+
+task t_read();
+    begin
+        @(negedge clk_i);
+        go_i = 1'b1;
+        rw_en_i = 1'b0;
+
+        @(negedge clk_i);
+        go_i = 1'b0;
+
+        @(negedge clk_i);
+        data_io_l = 'z;
+        
+        @(negedge clk_i);
+        read_valid_i = 1'b1;
+
+        @(negedge refresh_o);
+        read_valid_i = 1'b0;
+    end
+endtask
+
+task t_write_read(logic [6:0] data_i);
+    @(negedge clk_i);
+    go_i = 1'b1;
+    rw_en_i = 1'b1;
+
+    @(negedge clk_i);
+    go_i = 1'b0;
+
+    @(posedge write_valid_o);
+
+    @(negedge clk_i);
+    write_ready_i = 1'b1;
+    data_io_l = data_i;
+
+    @(negedge refresh_o);
+    write_ready_i = 1'b0;
+
+
+    @(negedge clk_i);
+    go_i = 1'b1;
+    rw_en_i = 1'b0;
+
+    @(negedge clk_i);
+    go_i = 1'b0;
+
+    @(negedge clk_i);
+    data_io_l = 'z;
+    
+    @(negedge clk_i);
+    read_valid_i = 1'b1;
+
+    @(negedge refresh_o);
+    read_valid_i = 1'b0;
+endtask
+
+task t_stream();
+    for (int i = 0; i < 128; i++) begin
+        t_write_read(i);
     end
 endtask
 
@@ -129,7 +202,20 @@ initial begin
     t_initial();
     @(negedge clk_i);
 
-    t_write();
+    t_write(13'd3);
+    @(negedge clk_i);
+
+    t_read();
+    @(negedge clk_i);
+
+    t_write(13'd6);
+    @(negedge clk_i);
+
+    t_read();
+    @(negedge clk_i);
+
+    // t_stream();
+    // @(negedge clk_i);
 
     $finish();
 end

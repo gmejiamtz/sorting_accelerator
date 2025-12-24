@@ -16,6 +16,7 @@ module sm
     input   logic   [0:0]   rw_en_i, //1 = write, 0 == read
     input   logic   [0:0]   read_valid_i, //check handshake smh sean
     input   logic   [0:0]   write_ready_i,
+    input   logic   [12:0]  row_col_addr_i,
 
     output  logic   [0:0]   ic_CS_o,
     output  logic   [0:0]   ic_RAS_o,
@@ -24,11 +25,14 @@ module sm
     output  logic   [0:0]   ic_CKE_o,
     output  logic   [12:0]  addr_o,
 
+    output logic    [0:0]   refresh_o,
+
     output  logic   [0:0]   read_ready_o,
     output  logic   [0:0]   write_valid_o
 );
 
     localparam addr_cmd = 13'b000_011_0_011;
+    localparam powerup_p = 167;
 
     import config_pkg::*;
 
@@ -40,14 +44,30 @@ module sm
 
 //fix parameter bus sizes im hella stupid lol, make them clog2ß
 
+    logic [0:0] go_flag;
+    logic [$clog2(powerup_p):0] global_cnt;
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i || state_d == INIT) begin
+            global_cnt <= '0;
+            go_flag <= 1'b0;
+        end else begin
+            if (go_i) begin
+                go_flag <= 1'b1;
+            end if (go_flag && (global_cnt != powerup_p)) begin
+                global_cnt <= global_cnt + 1;
+            end
+        end
+    end
+
 //TRP TIMER
     logic [0:0] trp_cnt_rst;
     logic [$clog2(RP_p):0] trp_cnt_d, trp_cnt_q;
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trp_cnt_rst) begin
-            trp_cnt_q <= 1'b0;
-        end else if (state_q == PC_ACTIV) begin
+            trp_cnt_q <= '0;
+        end else if (state_q == PC_ACTIV || state_q == PC_DEACTIV) begin
             //will change later to be better
             trp_cnt_q <= trp_cnt_q + 1;
         end 
@@ -55,7 +75,8 @@ module sm
 
 //RSC TIMER
     logic [0:0] trsc_cnt_rst;
-    logic [$clog2(RSC_p):0] trsc_cnt_d, trsc_cnt_q;
+    // logic [$clog2(RSC_p):0] trsc_cnt_d, trsc_cnt_q;
+    logic [3:0] trsc_cnt_d, trsc_cnt_q;
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trsc_cnt_rst) begin
@@ -169,6 +190,8 @@ module sm
         tread_cas_rst = 1'b0;
         twrite_cnt_rst = 1'b0;
 
+        refresh_o = 1'b0;
+
         twrite_cnt_d = twrite_cnt_q;
         tread_cas_del_d = tread_cas_del_q;
         tread_cnt_d = tread_cnt_q;
@@ -220,9 +243,9 @@ module sm
 
             MR: begin 
                 ic_l = 4'b0111;
-                addr_o = '0; // addr_cmd
+                addr_o = row_col_addr_i; // addr_cmd
 
-                if (trsc_cnt_q >= RSC_p) begin
+                if (trsc_cnt_q >= (RSC_p)) begin
                     state_d = BA;
                     ic_l = 4'b0011;
                     trcd_cnt_rst = 1'b1;
@@ -234,13 +257,17 @@ module sm
 
             BA: begin 
                 ic_l = 4'b0111;
-
+                if (global_cnt == powerup_p) begin
+                    write_valid_o = 1'b1;
+                end
                 if (trcd_cnt_q >= RCD_p) begin
                     if (rw_en_i && write_ready_i) begin 
+                        addr_o = row_col_addr_i;
                         state_d = WRITE;
                         ic_l = 4'b0100;      
                     end else if (!rw_en_i && read_valid_i) begin
                         state_d = READ;
+                        addr_o = row_col_addr_i;
                         ic_l = 4'b0101;
                     end
                 end
@@ -286,7 +313,7 @@ module sm
             PC_DEACTIV: begin
                 ic_l = 4'b0111;
                 
-                if (trp_cnt_q >= (RP_p - 1)) begin
+                if (trp_cnt_q >= (RP_p + 8)) begin
                     state_d = SR;
                     ic_l = 4'b0010;
                     addr_o[10] = 1'b1;
@@ -308,6 +335,7 @@ module sm
                         state_d = INIT;
                         ic_l = 4'b0111;
                         ic_CKE_o = 1'b1;
+                        refresh_o = 1'b1;
                     end else begin
                         state_d = SR;
                         ic_l = 4'b0001;
