@@ -57,16 +57,16 @@ dut(
     .row_col_addr_i (row_col_addr_i),
     .read_ready_o   (read_ready_o),
     .write_valid_o  (write_valid_o),
-    .bank_sel_o     (bank_sel_o),
-    .CS_o           (CS_o),
-    .RAS_o          (RAS_o),
-    .CAS_o          (CAS_o),
-    .WE_o           (WE_o),
-    .CKE_o          (CKE_o),
+    .sdram_ba       (bank_sel_o),
+    .sdram_csn      (CS_o),
+    .sdram_rasn     (RAS_o),
+    .sdram_casn     (CAS_o),
+    .sdram_wen      (WE_o),
+    .sdram_cke      (CKE_o),
     .m_data_o       (m_data_o),
-    .addr_o         (addr_o),
+    .sdram_a        (addr_o),
     .refresh_o      (refresh_o),
-    .data_io        (data_io)
+    .sdram_d        (data_io)
 );
 
 W9825G6KH uut (
