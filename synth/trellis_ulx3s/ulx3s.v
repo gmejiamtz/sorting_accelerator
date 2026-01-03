@@ -1,8 +1,8 @@
 module ulx3s (
     input wire clkin,
     input wire reset_ni,
-    input wire [3:1] btn,
-    output wire [3:0] led
+    // input wire [3:1] btn,
+    // output wire [4:0] led
 );
 
 wire clk;
@@ -51,6 +51,8 @@ EHXPLLL #(
     //     .c_i(btn[3]),
     //     .d_o(led[0])
     // );
-    assign led[3:1] = btn[3:1];
+    // assign led[3:1] = btn[3:1];
+    // assign led[0] = 1'b1;
+    // assign led[4] = 1'b0;
 
 endmodule
