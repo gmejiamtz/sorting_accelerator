@@ -27,7 +27,8 @@ module sm
     output  logic   [0:0]   ic_CKE_o,
     output  logic   [12:0]  addr_o,
 
-    output logic    [0:0]   refresh_o,
+    output  logic   [0:0]   refresh_o,
+    output  logic   [0:0]   rw_o,  
 
     output  logic   [0:0]   read_ready_o,
     output  logic   [0:0]   write_valid_o
@@ -191,6 +192,7 @@ module sm
         twrite_cnt_rst = 1'b0;
 
         refresh_o = 1'b0;
+        rw_o = 1'b0;
 
         twrite_cnt_d = twrite_cnt_q;
         tread_cas_del_d = tread_cas_del_q;
@@ -276,12 +278,16 @@ module sm
             READ: begin
                 ic_l = 4'b0111;
 
+                if ((tread_cnt_q >= cas_laten_p) && (tread_cnt_q < cas_laten_p + burst_len_p)) begin
+                    read_ready_o = 1'b1;
+                end else begin
+                    read_ready_o = 1'b0;
+                end
                 if (tread_cnt_q >= (burst_len_p + RP_p - 1)) begin
                     //tread_cnt_rst = 1'b1; // Might not want? It'll reset immediately, but not get through 2nd if statement in time b4 goes to 0
                     tread_flag = 1'b1;
                     if (tread_cas_del_q >= 2) begin
                         state_d = PC_DEACTIV;
-                        read_ready_o = 1'b1;
                         tread_cas_rst = 1'b1;
                         tread_cnt_rst = 1'b1;
                         tread_flag = 1'b0;
@@ -298,6 +304,8 @@ module sm
 
             WRITE: begin
                 ic_l = 4'b0111;
+                rw_o = 1'b1;
+                
                 if (twrite_cnt_q >= (burst_len_p + RP_p + 1)) begin
                     state_d = PC_DEACTIV;
                     write_valid_o = 1'b1;

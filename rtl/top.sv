@@ -11,70 +11,52 @@ module top(
     input   logic   [12:0]  row_col_addr_i,
     output  logic   [0:0]   read_ready_o,
     output  logic   [0:0]   write_valid_o,
-    output logic    [0:0]   refresh_o,
+    output  logic   [1:0]   bank_sel_o,
+    output  logic   [0:0]   CS_o,
+    output  logic   [0:0]   RAS_o,
+    output  logic   [0:0]   CAS_o,
+    output  logic   [0:0]   WE_o,
+    output  logic   [0:0]   CKE_o,
     output  logic   [15:0]  m_data_o, // Data going out of memory controller
+    output  logic   [12:0]  addr_o,
 
-    output  logic   [1:0]   sdram_ba,
-    output  logic   [0:0]   sdram_csn,
-    output  logic   [0:0]   sdram_rasn,
-    output  logic   [0:0]   sdram_casn,
-    output  logic   [0:0]   sdram_wen,
-    output  logic   [0:0]   sdram_cke,
-    output  logic   [12:0]  sdram_a,
+    output logic    [0:0]   refresh_o,
     
-    inout   logic   [15:0]  sdram_d    
+    inout           [15:0]  data_io       
+    // inout           [7:0]   data_io
 );
 
-    localparam BS0 = 1'b1;
-    localparam BS1 = 1'b0;
+localparam BS0 = 1'b1;
+localparam BS1 = 1'b0;
 
-    logic [15:0] sdram_d_out;
-    logic [15:0] sdram_d_in;
+assign bank_sel_o = {BS1, BS0};
 
-    assign sdram_d   = rw_en_i ? sdram_d_out : 16'bz;
-    assign sdram_d_in = sdram_d;
-
-    always_comb begin
-        if (rw_en_i) begin
-            sdram_d_out = m_data_i;
-        end else begin
-            sdram_d_out = '0;
-        end
-    end
-
-    logic [15:0] read_data_r;
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            read_data_r <= 16'b0;
-        end else if (read_valid_i) begin
-            read_data_r <= sdram_d_in;
-        end
-    end
-
-    assign m_data_o = read_data_r;
-
-    logic [0:0] sm_write_valid_o, sm_read_ready_o;  
-    sm memory_controller_sm (
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-        .go_i(go_i),
-        .rw_en_i(rw_en_i),
-        .read_valid_i(read_valid_i),
-        .write_ready_i(write_ready_i),
-        .row_col_addr_i(row_col_addr_i),
-        .ic_CS_o(sdram_csn),
-        .ic_CAS_o(sdram_casn),
-        .ic_RAS_o(sdram_rasn),
-        .ic_WE_o(sdram_wen),
-        .ic_CKE_o(sdram_cke),
-        .read_ready_o(read_ready_o),
-        .write_valid_o(write_valid_o),
-        .addr_o(sdram_a),
-        .refresh_o(refresh_o)
-    );
+logic [0:0] rw_o;
+assign data_io = rw_o ? m_data_i : 16'hzzzz;
 
 
+always_comb begin
+    m_data_o = read_ready_o ? data_io : 16'hzzzz;
+end
 
-
+sm memory_controller_sm (
+    .clk_i(clk_i),
+    .rst_i(rst_i),
+    .go_i(go_i),
+    .rw_en_i(rw_en_i),
+    .read_valid_i(read_valid_i),
+    .write_ready_i(write_ready_i),
+    .row_col_addr_i(row_col_addr_i),
+    .ic_CS_o(CS_o),
+    .ic_CAS_o(CAS_o),
+    .ic_RAS_o(RAS_o),
+    .ic_WE_o(WE_o),
+    .ic_CKE_o(CKE_o),
+    .read_ready_o(read_ready_o),
+    .write_valid_o(write_valid_o),
+    .addr_o(addr_o),
+    .refresh_o(refresh_o),
+    .rw_o(rw_o)
+);
 
 endmodule
