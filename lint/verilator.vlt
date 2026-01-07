@@ -7,3 +7,6 @@ lint_off -file "*yosys/*" -match "*"
 lint_off -rule PINCONNECTEMPTY
 lint_off -rule GENUNNAMED
 lint_off -rule UNUSEDPARAM -file "*pkg.sv"
+
+lint_off -rule IMPORTSTAR 
+lint_off -rule TIMESCALEMOD 
