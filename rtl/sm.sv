@@ -9,7 +9,6 @@ module sm
     parameter XSR_p = 75, //min of 72, making it 75 for some leeway
     parameter REF_p = 3, //temp -> should just be 64ms/(1/133M)
     parameter burst_len_p = 8,
-    parameter data_len_p = 0, //temp
     parameter cas_laten_p = 3 //maybe 3
 )(
     input   logic   [0:0]   clk_i,
@@ -18,7 +17,8 @@ module sm
     input   logic   [0:0]   rw_en_i, //1 = write, 0 == read
     input   logic   [0:0]   read_valid_i, //check handshake smh sean
     input   logic   [0:0]   write_ready_i,
-    input   logic   [12:0]  row_col_addr_i,
+    input   logic   [12:0]  row_addr_i,
+    input   logic   [12:0]  col_addr_i,
 
     output  logic   [0:0]   ic_CS_o,
     output  logic   [0:0]   ic_RAS_o,
@@ -63,7 +63,7 @@ module sm
 
 //TRP TIMER
     logic [0:0] trp_cnt_rst;
-    logic [$clog2(RP_p):0] trp_cnt_d, trp_cnt_q;
+    logic [$clog2(RP_p):0] trp_cnt_q; //trp_cnt_d, 
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trp_cnt_rst) begin
@@ -77,11 +77,11 @@ module sm
 //RSC TIMER
     logic [0:0] trsc_cnt_rst;
     // logic [$clog2(RSC_p):0] trsc_cnt_d, trsc_cnt_q;
-    logic [3:0] trsc_cnt_d, trsc_cnt_q;
+    logic [3:0] trsc_cnt_q; //trsc_cnt_d, 
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trsc_cnt_rst) begin
-            trsc_cnt_q <= 1'b0;
+            trsc_cnt_q <= '0;
         end else if (state_q == MR) begin
             //will change later to be better
             trsc_cnt_q <= trsc_cnt_q + 1;
@@ -90,11 +90,11 @@ module sm
 
 //RCD TIMER
     logic [0:0] trcd_cnt_rst;
-    logic [$clog2(RCD_p):0] trcd_cnt_d, trcd_cnt_q;
+    logic [$clog2(RCD_p):0] trcd_cnt_q; //trcd_cnt_d, 
 
     always_ff @(posedge clk_i) begin
         if (rst_i || trcd_cnt_rst) begin
-            trcd_cnt_q <= 1'b0;
+            trcd_cnt_q <= '0;
         end else if (state_q == BA) begin
             //will change later to be better
             trcd_cnt_q <= trcd_cnt_q + 1;
@@ -104,11 +104,11 @@ module sm
 //REF TIMER
     logic [0:0] tref_cnt_rst;
     //maybe it should be clog2(ref_p)-1, but the earlier cases cant be -1 so we'll stay consistent *for now*
-    logic [$clog2(REF_p):0] tref_cnt_d, tref_cnt_q;
+    logic [$clog2(REF_p):0] tref_cnt_q; //tref_cnt_d, 
 
     always_ff @(posedge clk_i) begin
         if (rst_i || tref_cnt_rst) begin
-            tref_cnt_q <= 1'b0;
+            tref_cnt_q <= '0;
         end else if (state_q == SR) begin
             //will change later to be better
             tref_cnt_q <= tref_cnt_q + 1;
@@ -118,11 +118,11 @@ module sm
 //XSR TIMER
     logic [0:0] txsr_cnt_rst, xsr_flag;
     //maybe it should be clog2(xsr_p)-1, but the earlier cases cant be -1 so we'll stay consistent *for now*
-    logic [$clog2(XSR_p):0] txsr_cnt_d, txsr_cnt_q;
+    logic [$clog2(XSR_p):0] txsr_cnt_q; //txsr_cnt_d, 
 
     always_ff @(posedge clk_i) begin
         if (rst_i || txsr_cnt_rst) begin
-            txsr_cnt_q <= 1'b0;
+            txsr_cnt_q <= '0;
         end else if (xsr_flag) begin
             //will change later to be better
             txsr_cnt_q <= txsr_cnt_q + 1;
@@ -136,7 +136,7 @@ module sm
 
     always_ff @(posedge clk_i) begin
         if (rst_i || tread_cnt_rst) begin
-            tread_cnt_q <= 1'b0;
+            tread_cnt_q <= '0;
         end else if (state_q == READ) begin
             //will change later to be better
             tread_cnt_q <= tread_cnt_d + 1;
@@ -147,7 +147,7 @@ module sm
     logic [0:0] tread_flag;
     always_ff @(posedge clk_i) begin
         if (rst_i || tread_cas_rst) begin
-            tread_cas_del_q <= 0;
+            tread_cas_del_q <= '0;
         end else if ((state_q == READ) & tread_flag) begin
             //will change later to be better
             tread_cas_del_q <= tread_cas_del_d + 1;
@@ -161,7 +161,7 @@ module sm
 
     always_ff @(posedge clk_i) begin
         if (rst_i || twrite_cnt_rst) begin
-            twrite_cnt_q <= 0;
+            twrite_cnt_q <= '0;
         end else if (state_q == WRITE) begin
             //will change later to be better
             twrite_cnt_q <= twrite_cnt_d + 1;
@@ -197,11 +197,11 @@ module sm
         twrite_cnt_d = twrite_cnt_q;
         tread_cas_del_d = tread_cas_del_q;
         tread_cnt_d = tread_cnt_q;
-        txsr_cnt_d = txsr_cnt_q;
-        tref_cnt_d = tref_cnt_q;
-        trcd_cnt_d = trcd_cnt_q;
-        trsc_cnt_d = trsc_cnt_q;
-        trp_cnt_d = trp_cnt_q;
+        // txsr_cnt_d = txsr_cnt_q;
+        // tref_cnt_d = tref_cnt_q;
+        // trcd_cnt_d = trcd_cnt_q;
+        // trsc_cnt_d = trsc_cnt_q;
+        // trp_cnt_d = trp_cnt_q;
 
         tread_flag = 1'b0;
 
@@ -245,7 +245,7 @@ module sm
 
             MR: begin 
                 ic_l = 4'b0111;
-                addr_o = row_col_addr_i; // addr_cmd
+                addr_o = row_addr_i; // addr_cmd
 
                 if (trsc_cnt_q >= (RSC_p)) begin
                     state_d = BA;
@@ -264,12 +264,12 @@ module sm
                 end
                 if (trcd_cnt_q >= RCD_p) begin
                     if (rw_en_i && write_ready_i) begin 
-                        addr_o = row_col_addr_i;
+                        addr_o = col_addr_i;
                         state_d = WRITE;
                         ic_l = 4'b0100;      
                     end else if (!rw_en_i && read_valid_i) begin
                         state_d = READ;
-                        addr_o = row_col_addr_i;
+                        addr_o = col_addr_i;
                         ic_l = 4'b0101;
                     end
                 end
@@ -308,11 +308,12 @@ module sm
                 
                 if (twrite_cnt_q >= (burst_len_p + RP_p + 1)) begin
                     state_d = PC_DEACTIV;
-                    write_valid_o = 1'b1;
+                    write_valid_o = 1'b0;
                     twrite_cnt_rst = 1'b1;
                     ic_l = 4'b0010;
                 end else begin
-                    addr_o = {3'd0, twrite_cnt_q};
+                    write_valid_o = 1'b1;
+                    addr_o = {5'd0, twrite_cnt_q};
                     state_d = WRITE;
                     ic_l = 4'b0111;
                 end
@@ -358,7 +359,5 @@ module sm
         default: state_d = INIT;
         endcase
     end
-
-
 
 endmodule
