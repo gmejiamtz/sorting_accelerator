@@ -6,7 +6,7 @@ module sm
     parameter RSC_p = 10, //clk 133MHz -> i think it should be 166MHz actualy 
     parameter RP_p = 13, //15ns
     parameter RCD_p = 3, 
-    parameter XSR_p = 75, //min of 72, making it 75 for some leeway
+    parameter XSR_p = 7500, //min of 72, making it 75 for some leeway
     parameter REF_p = 3, //temp -> should just be 64ms/(1/133M)
     parameter burst_len_p = 8,
     parameter cas_laten_p = 3 //maybe 3
@@ -107,7 +107,7 @@ module sm
     logic [$clog2(REF_p):0] tref_cnt_q; //tref_cnt_d, 
 
     always_ff @(posedge clk_i) begin
-        if (rst_i || tref_cnt_rst) begin
+        if (rst_i || (state_q != SR)) begin
             tref_cnt_q <= '0;
         end else if (state_q == SR) begin
             //will change later to be better
@@ -121,7 +121,7 @@ module sm
     logic [$clog2(XSR_p):0] txsr_cnt_q; //txsr_cnt_d, 
 
     always_ff @(posedge clk_i) begin
-        if (rst_i || txsr_cnt_rst) begin
+        if (rst_i || (state_q != SR)) begin
             txsr_cnt_q <= '0;
         end else if (xsr_flag) begin
             //will change later to be better
@@ -197,11 +197,6 @@ module sm
         twrite_cnt_d = twrite_cnt_q;
         tread_cas_del_d = tread_cas_del_q;
         tread_cnt_d = tread_cnt_q;
-        // txsr_cnt_d = txsr_cnt_q;
-        // tref_cnt_d = tref_cnt_q;
-        // trcd_cnt_d = trcd_cnt_q;
-        // trsc_cnt_d = trsc_cnt_q;
-        // trp_cnt_d = trp_cnt_q;
 
         tread_flag = 1'b0;
 
