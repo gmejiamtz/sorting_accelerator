@@ -1,19 +1,22 @@
 `timescale 1ns/1ps
 module sdram_tb();
 
-localparam NumTests = 1;
+localparam NumTests = 4;
 
 logic [0:0] clk_i;
 logic [0:0] reset_i;
-// logic [0:0] go_i;
-// logic [15:0] m_data_i;
-// logic [0:0] rw_en_i; //check if 0 is read or write
-// logic [0:0] read_valid_i;
-// logic [0:0] write_ready_i;
+logic [0:0] go_i;
+logic [15:0] m_data_i;
+logic [0:0] rw_en_i;
+logic [0:0] read_valid_i;
+logic [0:0] write_ready_i;
 
-// logic [0:0] read_ready_o;
-// logic [0:0] write_valid_o;
+logic [0:0] read_ready_o;
+logic [0:0] write_valid_o;
 logic [1:0] bank_sel_o;
+
+logic [0:0] uart_i;
+
 logic [0:0] CS_o;
 logic [0:0] RAS_o;
 logic [0:0] CAS_o;
@@ -25,6 +28,7 @@ logic [0:0] CKE_o;
 // logic [15:0] m_data_o;
 // logic [12:0] row_col_addr_i;
 logic [12:0] addr_o;
+logic [12:0] row_addr_i, col_addr_i;
 wire [15:0] data_io;
 
 logic [0:0] rx_o, tx_i;
@@ -45,10 +49,23 @@ initial begin
     end
 end
 
-   
+localparam burst_len_p = 2; 
+
 top 
-#()
+#(.burst_len_p(burst_len_p))
 dut(
+    .go_i           (go_i),
+    .m_data_i       (),
+    .m_data_o       (),
+    .rw_en_i        (rw_en_i),
+    .read_valid_i   (read_valid_i),
+    .write_ready_i  (),
+    .row_addr_i     (row_addr_i),
+    .col_addr_i     (col_addr_i),
+    .read_ready_o   (),
+    .write_valid_o  (),
+    .uart_i         (uart_i),
+    
     .clk_i          (clk_i),
     .rst_i          (reset_i),
     .rx_i           (rx_o),
@@ -80,7 +97,6 @@ W9825G6KH uut (
 
 localparam width_p = 8;
 localparam prescale_p = 90; // Might work for 165MHz clock? Intended 11200 baud rate
-localparam burst_len_p = 8;
 
 logic [width_p-1:0] packet_tx;
 logic [0:0] tx_tvalid_i, tx_tready_o, busy_tx;
@@ -113,13 +129,16 @@ uart_rx #(.DATA_WIDTH(width_p))
     .prescale(prescale_p)
 );
 
-
+logic [width_p-1:0] tx_data_l [0:(burst_len_p - 1)];
+logic [width_p-1:0] rx_data_l [0:(burst_len_p - 1)];
 task t_initial();
     tx_tvalid_i = 1'b0;
     rx_tready_i = 1'b0;
     packet_tx = '0;
     reset_i = 1'b0;
     data_io_l = 16'hzzzz;
+    tx_data_l = '{burst_len_p{$urandom_range(10, 20)}};
+    rx_data_l = '{burst_len_p{'0}};
 
     @(negedge clk_i);
 
@@ -128,278 +147,182 @@ task t_initial();
     repeat(3)@(negedge clk_i);
 
     reset_i = 1'b0;
+    
+    assert($isunknown(dut.m_data_o));
+    assert($isunknown(data_io));
 endtask
 
-task t_write();
-
-    $display("Sending rw_en_i");
+task t_write_UART();
+    uart_i = 1'b1;
+    repeat(100)@(negedge clk_i);
     packet_tx = 8'd01;
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending row_addr");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending col_addr");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending Write Entry 0");
-    packet_tx = $urandom_range(10, 20);
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
     
-
-    $display("Sending Write Entry 1");
-    packet_tx = $urandom_range(10, 20);
+    packet_tx = 8'd0; // row addr
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending Write Entry 2");
-    packet_tx = $urandom_range(10, 20);
+    packet_tx = 8'd50; // col addr
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending Write Entry 3");
-    packet_tx = $urandom_range(10, 20);
+    foreach (tx_data_l[i]) begin
+        packet_tx = tx_data_l[i];
+        tx_tvalid_i = 1'b1;
+        @(negedge clk_i);
+        @(posedge dut.rx_valid);
+        tx_tvalid_i = 1'b0;
+        @(negedge clk_i);
+    end
+    @(negedge dut.refresh_o);
+    uart_i = 1'b0;
+
+    assert(dut.rx_buff[3:(burst_len_p + 2)] == tx_data_l) else begin
+        $error("Read Buffer != Input Data!\n");
+        $display("Read Buffer: %0p", dut.read_buff);
+        $display("Input Data: %0p", tx_data_l);
+    end
+    @(negedge clk_i);
+endtask
+
+task t_write_IO();
+    uart_i = 1'b0;
+    packet_tx = 8'd01;
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending Write Entry 4");
-    packet_tx = $urandom_range(10, 20);
+    packet_tx = 8'd0;
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending Write Entry 5");
-    packet_tx = $urandom_range(10, 20);
+    packet_tx = 8'd0;
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending Write Entry 6");
-    packet_tx = $urandom_range(10, 20);
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending Write Entry 7");
-    packet_tx = $urandom_range(10, 20);
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
+    foreach (tx_data_l[i]) begin
+        packet_tx = tx_data_l[i];
+        tx_tvalid_i = 1'b1;
+        @(negedge clk_i);
+        @(posedge dut.rx_valid);
+        tx_tvalid_i = 1'b0;
+        @(negedge clk_i);
+    end
 
     @(negedge dut.refresh_o);
 
-    $display("DUT State: %0d", dut.state_q);
-    $display("Memory State: %0d", dut.memory_controller_sm.state_q);
+    assert(dut.rx_buff[3 : (burst_len_p + 2)] == tx_data_l) else begin
+        $error("Read Buffer != Input Data!\n");
+        $display("Read Buffer: %0p", dut.read_buff);
+        $display("Input Data: %0p", tx_data_l);
+    end
 endtask
 
-task t_read();
-    $display("Sending rw_en_i");
+int j = 0;
+task t_read_UART();
+    uart_i = 1'b1;
     packet_tx = 8'd0;
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending row_addr");
-    packet_tx = 8'd00;
+    packet_tx = 8'd00; // row addr
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending col_addr");
-    packet_tx = 8'd0;
+    packet_tx = 8'd50; // col addr
     tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
     @(posedge dut.rx_valid);
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
     @(negedge clk_i);
 
-    $display("Sending Read Entry 0");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
+    foreach (tx_data_l[i]) begin
+        packet_tx = 8'd0;
+        tx_tvalid_i = 1'b1;
+        @(negedge clk_i);
+        @(posedge dut.rx_valid);
+        tx_tvalid_i = 1'b0;
+        @(negedge clk_i);
+    end
+
+
+    while (j != burst_len_p) begin
+        // $display("MEM STATE: %s", dut.memory_controller_sm.state_q.name());
+        @(posedge dut.tx_ready_o);
+        uart_i = 1'b0;
+        tx_tvalid_i = 1'b1;
+        @(posedge tx_tready_o);
+        assert(rx_data_o == tx_data_l[j]) else $error("Received Data != Input Data[%0d]\n", j);
+        rx_data_l[j] = rx_data_o;
+        j++;
+        @(negedge clk_i);
+        tx_tvalid_i = 1'b0;
+    end
     tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
+
+    j = 0;
+endtask
+
+task t_read_IO();
+    uart_i = 1'b0;
+    rw_en_i = 1'b0;
+    read_valid_i = 1'b0;
+    go_i = 1'b1;
+
+    row_addr_i = '0;
+    col_addr_i = 8'd50;
+
     @(negedge clk_i);
+    go_i = 1'b0;
+
+    @(negedge clk_i);
+    data_io_l = 'z;
     
-
-    $display("Sending Read Entry 1");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
     @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
+    read_valid_i = 1'b1;
+
     @(negedge clk_i);
 
-    $display("Sending Read Entry 2");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
+    while (j != burst_len_p) begin
+        if (dut.read_ready_o) begin
+            assert(data_io == tx_data_l[j]) else begin
+                $error("Data Read from Ports != Expected Data");
+                $error("Data IO: %0d", data_io);
+                $error("Expected Data: %0d\n", tx_data_l[j]);
+            end
+            j++;
+        end
+        @(negedge clk_i);
+    end
 
-    $display("Sending Read Entry 3");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending Read Entry 4");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending Read Entry 5");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending Read Entry 6");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-    @(negedge clk_i);
-
-    $display("Sending Read Entry 7");
-    packet_tx = 8'd0;
-    tx_tvalid_i = 1'b1;
-    @(negedge clk_i);
-    $display("Sent Packet: %0b", packet_tx[7:0]);
-    @(posedge dut.rx_valid);
-    tx_tvalid_i = 1'b0;
-    $display("Read Count: %0d", dut.read_cnt_q);
-    $display("Received Packet: %0b\n", dut.packet_rx);
-
-    repeat(10)@(negedge clk_i);
-    $display("DUT State: %0d", dut.state_q);
-    $display("Read Count: %0d", dut.read_cnt_q);
-
-    @(dut.state_q == 2'b11);
-    $display("Entered TX_O State");
-    repeat(20)@(negedge clk_i);
-    $display("read_buff[0] = %0h", dut.read_buff[0]);
-    $display("read_buff[1] = %0h", dut.read_buff[1]);
-    $display("read_buff[2] = %0h", dut.read_buff[2]);
-    $display("read_buff[3] = %0h", dut.read_buff[3]);
-    $display("read_buff[4] = %0h", dut.read_buff[4]);
-    $display("read_buff[5] = %0h", dut.read_buff[5]);
-    $display("read_buff[6] = %0h", dut.read_buff[6]);
-    $display("read_buff[7] = %0h", dut.read_buff[7]);
-    // while(dut.state_q != 2'b00) begin
-    //     $display("Count");
-    // end
-
+    j = 0;
+    @(negedge dut.refresh_o);
+    read_valid_i = 1'b0;
+    $display("\n\n");
 endtask
 
 // UART Test
@@ -410,14 +333,29 @@ initial begin
     @(negedge clk_i);
 
     repeat(NumTests) begin
-        $display("Write Test %0d\n\n", i);
-        t_write();
+        $display("\n\n======================");
+        $display("Write Test for UART %0d", i);
+        $display("======================\n\n");
+        t_write_UART();
         @(negedge clk_i);
 
-        $display("Read Test %0d\n\n", i);
-        i++;
-        t_read();
+        $display("\n\n======================");
+        $display("Read Test for UART %0d", i);
+        $display("======================\n\n");
+        t_read_UART();
         @(negedge clk_i);
+    
+        // // $display("Write Test for IO %0d", i);
+        // // $display("======================\n\n");
+        // // t_write_IO();
+        // // @(negedge clk_i);
+
+        $display("\n\n======================");
+        $display("Read Test for IO %0d", i);
+        $display("======================\n\n");
+        t_read_IO();
+        @(negedge clk_i);
+        i++;
     end
 
     $finish();
