@@ -3,17 +3,29 @@ TOP := ulx3s_tb
 
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
 export ALEXFORENCICH_UART_DIR := $(abspath third_party/alexforencich_uart)
+export VERILOG_AXI_DIR := $(abspath third_party/verilog_axi)
+export VERILOG_AXIS_DIR := $(abspath third_party/verilog_axis)
+export UART_AXI_DIR := $(abspath third_party/axi_uart)
+export PICORV32_DIR := $(abspath third_party/picorv32)
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
 
 RTL := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
  ALEXFORENCICH_UART_DIR=$(ALEXFORENCICH_UART_DIR) \
+ VERILOG_AXI_DIR=$(VERILOG_AXI_DIR) \
+ VERILOG_AXIS_DIR=$(VERILOG_AXIS_DIR) \
+ UART_AXI_DIR=$(UART_AXI_DIR) \
+ PICORV32_DIR=$(PICORV32_DIR) \
  python3 misc/convert_filelist.py Makefile rtl/rtl.f \
 )
 
 SV2V_ARGS := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
  ALEXFORENCICH_UART_DIR=$(ALEXFORENCICH_UART_DIR) \
+ VERILOG_AXI_DIR=$(VERILOG_AXI_DIR) \
+ VERILOG_AXIS_DIR=$(VERILOG_AXIS_DIR) \
+ UART_AXI_DIR=$(UART_AXI_DIR) \
+ PICORV32_DIR=$(PICORV32_DIR) \
  python3 misc/convert_filelist.py sv2v rtl/rtl.f \
 )
 
@@ -47,7 +59,7 @@ synth/trellis_ulx3s/build/synth.v synth/trellis_ulx3s/build/synth.json: synth/bu
 	yosys -p 'tcl synth/trellis_ulx3s/yosys.tcl' -l synth/trellis_ulx3s/build/yosys.log
 
 synth/trellis_ulx3s/build/ulx3s.config: synth/trellis_ulx3s/build/synth.json synth/trellis_ulx3s/nextpnr.py synth/trellis_ulx3s/nextpnr_ecp5.lpf
-	nextpnr-ecp5 --12k --json synth/trellis_ulx3s/build/synth.json \
+	nextpnr-ecp5 --85k --json synth/trellis_ulx3s/build/synth.json \
 	 --pre-pack synth/trellis_ulx3s/nextpnr.py \
 	 --package CABGA381 \
 	 --lpf synth/trellis_ulx3s/nextpnr_ecp5.lpf \

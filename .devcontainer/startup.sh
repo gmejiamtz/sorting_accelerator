@@ -1,2 +1,2 @@
 source /tools/oss-cad-suite/environment
-export PATH=$PATH:/tools/sv2v-Linux
+export PATH=$PATH:/tools/sv2v

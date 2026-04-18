@@ -18,3 +18,5 @@ dv/ulx3s_tb.sv
 -Werror-IMPLICIT
 -Werror-USERERROR
 -Werror-LATCH
+-Wno-WIDTHTRUNC
+-Wno-UNUSEDSIGNAL

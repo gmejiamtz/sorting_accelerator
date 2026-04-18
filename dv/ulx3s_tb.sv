@@ -12,12 +12,12 @@ initial begin
     $display( "Begin simulation." );
     $urandom(100);
     $timeformat( -3, 3, "ms", 0);
-
     ulx3s_runner.reset();
-    ulx3s_runner.set_a_i(1'b1);
-    ulx3s_runner.set_c_i(1'b1);
-    ulx3s_runner.wait_n_cycles(50);
-
+    ulx3s_runner.wait_n_cycles(2);
+    ulx3s_runner.run_until_ebreak();
+    $display("Dumping stdout buffer.");
+    ulx3s_runner.dump_stdout_buffer();
+    ulx3s_runner.wait_n_cycles(500000);
     $display( "End simulation." );
     $finish;
 end
