@@ -7,7 +7,7 @@ module bitonic_sorter_pe (
     input [31:0] val_2_i,
     //output values
     output [31:0] high_o,
-    output [31:0] low_o,
+    output [31:0] low_o
 );
 
 logic [31:0] high_d, high_q;    //high value

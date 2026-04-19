@@ -27,3 +27,4 @@ rtl/pico_to_mems.v
 rtl/pcpi_counter.sv
 rtl/top.sv
 rtl/bitonic_sorter_pe.sv
+rtl/bitonic_sorter_first_stage.sv

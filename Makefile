@@ -94,6 +94,7 @@ clean:
 	 *.memh *.memb \
 	 *sim_dir *gls_dir \
 	 *_tb_dir \
+	 *.fst \
 	 dump.vcd dump.fst \
 	 synth/build \
 	 synth/yosys_generic/build \
