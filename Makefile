@@ -93,6 +93,7 @@ clean:
 	rm -rf \
 	 *.memh *.memb \
 	 *sim_dir *gls_dir \
+	 *_tb_dir \
 	 dump.vcd dump.fst \
 	 synth/build \
 	 synth/yosys_generic/build \
