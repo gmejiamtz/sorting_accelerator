@@ -1,4 +1,3 @@
-
 TOP := ulx3s_tb
 
 export BASEJUMP_STL_DIR := $(abspath third_party/basejump_stl)
@@ -8,6 +7,13 @@ export VERILOG_AXIS_DIR := $(abspath third_party/verilog_axis)
 export UART_AXI_DIR := $(abspath third_party/axi_uart)
 export PICORV32_DIR := $(abspath third_party/picorv32)
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
+
+# 1. Corrected Discovery: Look for .sv files in the dv/ directory 
+TESTBENCHES := $(wildcard dv/*_tb.sv)
+
+# 2. Transform "dv/bitonic_tb.sv" into "sim_bitonic_tb" 
+# notdir removes "dv/", basename removes ".sv"
+SIM_TARGETS := $(foreach t,$(TESTBENCHES),sim_$(basename $(notdir $(t))))
 
 RTL := $(shell \
  BASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR) \
@@ -29,14 +35,20 @@ SV2V_ARGS := $(shell \
  python3 misc/convert_filelist.py sv2v rtl/rtl.f \
 )
 
-.PHONY: lint sim gls trellis_ulx3s_gls trellis_ulx3s_program trellis_ulx3s_flash clean
+# Mark the dynamic sim targets as PHONY so they always run 
+.PHONY: lint sim gls trellis_ulx3s_gls trellis_ulx3s_program trellis_ulx3s_flash clean $(SIM_TARGETS)
 
 lint:
 	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top top
 
-sim:
-	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f rtl/rtl.f -f dv/pre_synth.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
-	./${TOP}_$@_dir/V${TOP} +verilator+rand+reset+2
+# Run all discovered testbenches 
+sim: $(SIM_TARGETS)
+
+# 3. Pattern rule for simulations [cite: 1, 2]
+# $* matches the part after 'sim_', which is your module name
+$(SIM_TARGETS): sim_%:
+	verilator lint/verilator.vlt --Mdir $*_$@_dir -f rtl/rtl.f -f dv/pre_synth.f -f dv/dv.f --binary -Wno-fatal --top $*
+	./$*_$@_dir/V$* +verilator+rand+reset+2
 
 synth/build/rtl.sv2v.v: ${RTL} rtl/rtl.f
 	mkdir -p $(dir $@)

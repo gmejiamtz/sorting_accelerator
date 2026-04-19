@@ -2,6 +2,7 @@
 dv/dv_pkg.sv
 
 dv/ulx3s_tb.sv
+dv/bitonic_sorter_pe_tb.sv
 
 --timing
 -j 0
