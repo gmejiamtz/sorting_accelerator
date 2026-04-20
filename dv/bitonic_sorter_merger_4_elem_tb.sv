@@ -14,7 +14,7 @@ logic uut_valid_o;
 //period
 parameter realtime ClockPeriod = 20ns;
 integer errors;
-localparam sample_size_lp = 10;
+localparam sample_size_lp = 1000000;
 
 //create a mock first stage of 2 PE sorters - alreadt tested
 bitonic_sorter_pe preprocessor_1 (
