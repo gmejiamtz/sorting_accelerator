@@ -101,5 +101,6 @@ clean:
 	 *.fst \
 	 dump.vcd dump.fst \
 	 synth/build \
+	 dv/formal_verf \
 	 synth/yosys_generic/build \
 	 synth/trellis_ulx3s/build

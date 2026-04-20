@@ -28,4 +28,5 @@ rtl/pcpi_counter.sv
 rtl/top.sv
 rtl/bitonic_sorter_pe.sv
 rtl/bitonic_sorter_first_stage.sv
+rtl/bitonic_sorter_second_stage.sv
 rtl/bitonic_sorter_merger_4_elem.sv

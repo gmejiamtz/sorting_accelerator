@@ -1,4 +1,4 @@
-module bitonic_sorter_first_stage (
+module bitonic_sorter_second_stage (
     input clk_i,
     input resetn_i,
     input descend_i,    //if high sort G to L
@@ -43,21 +43,28 @@ module bitonic_sorter_first_stage (
 
     logic [31:0] input_sequence_l [16];
     logic [31:0] output_sequence_l [16];
-    logic [7:0] valid_l;
-    logic [7:0] descend_l;
+    logic [3:0] valid_l;
+    logic [3:0] descend_1_l;
+    logic [3:0] descend_2_l;
 
-    for(genvar i = 0; i < 16; i=2+i) begin : bitonic_sorter_pe_genloop
-        bitonic_sorter_pe first_stage_sorter (
+    for(genvar i = 0; i < 16; i=4+i) begin : bitonic_sorter_merger_4_elem_genloop
+        bitonic_sorter_merger_4_elem second_stage_sorter (
             .clk_i(clk_i),
             .resetn_i(resetn_i),
-            .descend_i(descend_i),
-            .valid_i(valid_i),
+            .descend_1_i(descend_i),
+            .descend_2_i(descend_i),
             .val_1_i(input_sequence_l[i]),
             .val_2_i(input_sequence_l[i+1]),
-            .high_o(output_sequence_l[i]),
-            .low_o(output_sequence_l[i+1]),
-            .descend_o(descend_l[i >> 1]),
-            .valid_o(valid_l[i >> 1])
+            .val_3_i(input_sequence_l[i+2]),
+            .val_4_i(input_sequence_l[i+3]),
+            .descend_1_o(descend_1_l[i>>2]),
+            .descend_2_o(descend_2_l[i>>2]),
+            .valid_i(valid_i),
+            .valid_o(valid_l[i >> 2]),
+            .val_1_o(output_sequence_l[i]),
+            .val_2_o(output_sequence_l[i+1]),
+            .val_3_o(output_sequence_l[i+2]),
+            .val_4_o(output_sequence_l[i+3])
         );
     end
 
@@ -96,6 +103,6 @@ module bitonic_sorter_first_stage (
     assign val_15_o = output_sequence_l[14];
     assign val_16_o = output_sequence_l[15];
     assign valid_o = &valid_l;
-    assign descend_o = &descend_l;
+    assign descend_o = &descend_1_l & &descend_2_l;
 
 endmodule

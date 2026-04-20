@@ -3,6 +3,9 @@ module bitonic_sorter_pe_tb;
 logic clk_i;
 logic resetn_i;
 logic descend_i;
+logic descend_o;
+logic valid_i;
+logic valid_o;
 logic [31:0] val_1_i, val_2_i;
 logic [31:0] high_o,low_o;
 
@@ -15,8 +18,11 @@ bitonic_sorter_pe uut (
     .clk_i(clk_i),
     .resetn_i(resetn_i),
     .descend_i(descend_i),
+    .valid_i(valid_i),
     .val_1_i(val_1_i),
     .val_2_i(val_2_i),
+    .descend_o(descend_o),
+    .valid_o(valid_o),
     .high_o(high_o),
     .low_o(low_o)
 );
@@ -31,15 +37,16 @@ initial begin
 end
 
 task automatic reset;
-    resetn_i <= 0;
-    val_1_i <= '0;
-    val_2_i <= '0;
-    errors <= 0;
+    resetn_i = 0;
+    val_1_i = '0;
+    val_2_i = '0;
+    valid_i = '0;
+    errors = 0;
     //reset for 5 cycles
     repeat (5) begin
         @(posedge clk_i);
     end
-    resetn_i <= 1;
+    resetn_i = 1;
     //flush hardware for 5 cycles
     repeat (5) begin
         @(posedge clk_i);
@@ -48,10 +55,12 @@ endtask
 
 task automatic input_values(input [31:0] val_1, input [31:0] val_2,input [0:0] descend);
     begin
+        @(negedge clk_i);
         val_1_i = val_1;
         val_2_i = val_2;
+        valid_i = 1;
         descend_i = descend;
-        @(negedge clk_i);
+        wait(valid_o == 1);
         @(posedge clk_i); //sorter pe takes a cycle to compute its values
         if(descend_i) begin
             if(high_o < low_o) begin
@@ -64,6 +73,11 @@ task automatic input_values(input [31:0] val_1, input [31:0] val_2,input [0:0] d
                 $display("L to G sort failed! %d not less than or equal to %d", low_o,high_o);
             end
         end
+        val_1_i = 0;
+        val_2_i = 0;
+        valid_i = 0;
+        wait(valid_o == 0);
+        @(negedge clk_i);
     end
 endtask
 

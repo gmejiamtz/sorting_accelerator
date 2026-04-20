@@ -1,4 +1,4 @@
-module bitonic_sorter_first_stage_tb;
+module bitonic_sorter_second_stage_tb;
 
 logic clk_i;
 logic resetn_i;
@@ -38,13 +38,32 @@ logic [31:0] val_15_o;
 logic [31:0] val_16_o;
 logic valid_o;
 logic descend_o;
+//intermidate signals
+logic [31:0] first_val_1_o;
+logic [31:0] first_val_2_o;
+logic [31:0] first_val_3_o;
+logic [31:0] first_val_4_o;
+logic [31:0] first_val_5_o;
+logic [31:0] first_val_6_o;
+logic [31:0] first_val_7_o;
+logic [31:0] first_val_8_o;
+logic [31:0] first_val_9_o;
+logic [31:0] first_val_10_o;
+logic [31:0] first_val_11_o;
+logic [31:0] first_val_12_o;
+logic [31:0] first_val_13_o;
+logic [31:0] first_val_14_o;
+logic [31:0] first_val_15_o;
+logic [31:0] first_val_16_o;
+logic first_valid_o;
+logic first_descend_o;
 
 //period
 parameter realtime ClockPeriod = 20ns;
 integer errors;
 localparam sample_size_lp = 1000000;
 
-bitonic_sorter_first_stage uut (
+bitonic_sorter_first_stage stage_1 (
     .clk_i(clk_i),
     .resetn_i(resetn_i),
     .descend_i(descend_i),
@@ -65,6 +84,48 @@ bitonic_sorter_first_stage uut (
     .val_14_i(val_14_i),
     .val_15_i(val_15_i),
     .val_16_i(val_16_i),
+    //Outputs
+    .valid_o(first_valid_o),
+    .descend_o(first_descend_o),
+    .val_1_o(first_val_1_o),
+    .val_2_o(first_val_2_o),
+    .val_3_o(first_val_3_o),
+    .val_4_o(first_val_4_o),
+    .val_5_o(first_val_5_o),
+    .val_6_o(first_val_6_o),
+    .val_7_o(first_val_7_o),
+    .val_8_o(first_val_8_o),
+    .val_9_o(first_val_9_o),
+    .val_10_o(first_val_10_o),
+    .val_11_o(first_val_11_o),
+    .val_12_o(first_val_12_o),
+    .val_13_o(first_val_13_o),
+    .val_14_o(first_val_14_o),
+    .val_15_o(first_val_15_o),
+    .val_16_o(first_val_16_o)
+);
+
+bitonic_sorter_second_stage uut (
+    .clk_i(clk_i),
+    .resetn_i(resetn_i),
+    .descend_i(first_descend_o),
+    .valid_i(first_valid_o),
+    .val_1_i(first_val_1_o),
+    .val_2_i(first_val_2_o),
+    .val_3_i(first_val_3_o),
+    .val_4_i(first_val_4_o),
+    .val_5_i(first_val_5_o),
+    .val_6_i(first_val_6_o),
+    .val_7_i(first_val_7_o),
+    .val_8_i(first_val_8_o),
+    .val_9_i(first_val_9_o),
+    .val_10_i(first_val_10_o),
+    .val_11_i(first_val_11_o),
+    .val_12_i(first_val_12_o),
+    .val_13_i(first_val_13_o),
+    .val_14_i(first_val_14_o),
+    .val_15_i(first_val_15_o),
+    .val_16_i(first_val_16_o),
     //Outputs
     .valid_o(valid_o),
     .descend_o(descend_o),
@@ -128,6 +189,7 @@ endtask
 task automatic input_values(input [0:0] descend);
     begin
         logic [31:0] output_array [16];
+        logic error_found_this_call;
         @(negedge clk_i);
         val_1_i = $urandom();
         val_2_i = $urandom();
@@ -166,31 +228,40 @@ task automatic input_values(input [0:0] descend);
         output_array[14] =  val_15_o;
         output_array[15] =  val_16_o;
         //logic 
-        if(descend_i) begin
-            for(int i = 0; i < 16; i=2+i) begin
-                if(output_array[i] < output_array[i+1]) begin
-                    errors++;
-                    $display("Bitonic Sorter %d G to L sort failed! %d not greater than or equal to %d", i/2, output_array[i], output_array[i+1]);
+        for (int group = 0; group < 4; group++) begin
+            int base = group * 4;
+            if (descend) begin // G to L
+                for (int i = 0; i < 3; i++) begin
+                    if (output_array[base + i] < output_array[base + i + 1]) begin
+                        error_found_this_call = 1'b1;
+                        $display("Error: Group %0d, Index %0d (%0d) < Index %0d (%0d) in G to L sort", 
+                                  group, base+i, output_array[base+i], base+i+1, output_array[base+i+1]);
+                    end
                 end
-            end
-        end else begin
-            for(int i = 0; i < 16; i=2+i) begin
-                if(output_array[i] > output_array[i+1]) begin
-                    errors++;
-                    $display("Bitonic Sorter %d L to G sort failed! %d not lesser than or equal to %d", i/2, output_array[i], output_array[i+1]);
+            end else begin // L to G
+                for (int i = 0; i < 3; i++) begin
+                    if (output_array[base + i] > output_array[base + i + 1]) begin
+                        error_found_this_call = 1'b1;
+                        $display("Error: Group %0d, Index %0d (%0d) > Index %0d (%0d) in L to G sort", 
+                                  group, base+i, output_array[base+i], base+i+1, output_array[base+i+1]);
+                    end
                 end
             end
         end
+        // Only increment the global error counter once if any violation occurred
+        if (error_found_this_call) begin
+            errors++;
+        end
+        valid_i = 0;
+        wait(valid_o == 0);
+        @(negedge clk_i);
     end
-    valid_i = 0;
-    wait(valid_o == 0);
-    @(negedge clk_i);
 endtask
 
 initial begin
-    $dumpfile( "bitonic_sorter_first_stage.fst" );
+    $dumpfile( "bitonic_sorter_second_stage.fst" );
     $dumpvars;
-    $display("Beginning Bitonc Sorter First Stage Simulation");
+    $display("Beginning Bitonc Sorter Second Stage Simulation");
     reset();
     $display("Testing L to G sorting");
     for(int i = 0; i < sample_size_lp; i++) begin
@@ -204,7 +275,7 @@ initial begin
 end
 
 final begin
-    $display("Summarizing Bitonc Sorter First Stage Simulation");
+    $display("Summarizing Bitonc Sorter Second Stage Simulation");
     if(errors) begin
         $error("Failed %d/%d tests", errors, 2 * sample_size_lp);
     end else begin
