@@ -35,7 +35,7 @@ module bitonic_sorter_first_stage (
     output [31:0] val_13_o,
     output [31:0] val_14_o,
     output [31:0] val_15_o,
-    output [31:0] val_16_o,
+    output [31:0] val_16_o
 );
 
     logic [31:0] input_sequence_l [16];

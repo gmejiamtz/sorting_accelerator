@@ -4,6 +4,7 @@ dv/dv_pkg.sv
 dv/ulx3s_tb.sv
 dv/bitonic_sorter_pe_tb.sv
 dv/bitonic_sorter_first_stage_tb.sv
+dv/bitonic_sorter_merger_4_elem_tb.sv
 
 --timing
 -j 0
