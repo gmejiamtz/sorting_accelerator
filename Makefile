@@ -36,7 +36,7 @@ SV2V_ARGS := $(shell \
 )
 
 # Mark the dynamic sim targets as PHONY so they always run 
-.PHONY: lint sim gls trellis_ulx3s_gls trellis_ulx3s_program trellis_ulx3s_flash clean $(SIM_TARGETS)
+.PHONY: lint sim gls trellis_ulx3s_gls trellis_ulx3s_program trellis_ulx3s_flash clean $(SIM_TARGETS) formal
 
 lint:
 	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top top
@@ -88,6 +88,10 @@ trellis_ulx3s_program: synth/trellis_ulx3s/build/ulx3s.bit
 
 trellis_ulx3s_flash: synth/trellis_ulx3s/build/ulx3s.bit
 	sudo $(shell which fujprog) $<
+
+formal:
+	mkdir -p dv/formal_verf
+	sby -f dv/bitonic_sorter_merge_4_elem_formal.sby -d dv/formal_verf/merger_4_elem
 
 clean:
 	rm -rf \

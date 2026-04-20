@@ -1,0 +1,15 @@
+[options]
+mode prove
+depth 10
+
+[engines]
+smtbmc yices
+
+[script]
+read -formal bitonic_sorter_pe.sv
+read -formal bitonic_sorter_merger_4_elem.sv
+prep -top bitonic_sorter_merger_4_elem
+
+[files]
+rtl/bitonic_sorter_pe.sv
+rtl/bitonic_sorter_merger_4_elem.sv

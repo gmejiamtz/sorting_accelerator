@@ -82,4 +82,29 @@ module bitonic_sorter_merger_4_elem(
     );
 
     assign valid_o = sorter_pe_3_valid_l & sorter_pe_4_valid_l;
+
+    `ifdef FORMAL
+    // Concurrent Assertions for Formal Verification
+    // The design has a 2-cycle latency 
+    
+    // Ascending Check (L to G)
+    property p_ascending;
+        @(posedge clk_i) 
+        disable iff (!resetn_i)
+        (valid_o && !$past(descend_1_i, 2)) |-> 
+        (val_1_o <= val_2_o) && (val_2_o <= val_3_o) && (val_3_o <= val_4_o);
+    endproperty
+
+    // Descending Check (G to L)
+    property p_descending;
+        @(posedge clk_i) 
+        disable iff (!resetn_i)
+        (valid_o && $past(descend_1_i, 2)) |-> 
+        (val_1_o >= val_2_o) && (val_2_o >= val_3_o) && (val_3_o >= val_4_o);
+    endproperty
+
+    assert property (p_ascending);
+    assert property (p_descending);
+`endif
+
 endmodule
