@@ -1,4 +1,7 @@
-module bitonic_sorter_second_stage_tb;
+module bitonic_sorter_second_stage_tb
+    import config_pkg::*;
+    import dv_pkg::*;
+;
 
 logic clk_i;
 logic resetn_i;
@@ -59,9 +62,9 @@ logic first_valid_o;
 logic first_descend_o;
 
 //period
-parameter realtime ClockPeriod = 20ns;
+parameter realtime ClockPeriod = clock_period_p;
 integer errors;
-localparam sample_size_lp = 1000000;
+localparam sample_size_lp = sample_size_p;
 
 bitonic_sorter_first_stage stage_1 (
     .clk_i(clk_i),

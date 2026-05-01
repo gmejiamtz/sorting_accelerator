@@ -1,4 +1,7 @@
-module bitonic_sorter_merger_4_elem_tb;
+module bitonic_sorter_merger_4_elem_tb
+    import config_pkg::*;
+    import dv_pkg::*;
+;
 
 logic clk_i;
 logic resetn_i;
@@ -12,9 +15,9 @@ logic [31:0] output_array [4];  //array sorted by the uut
 logic uut_valid_o;
 
 //period
-parameter realtime ClockPeriod = 20ns;
+parameter realtime ClockPeriod = clock_period_p;
 integer errors;
-localparam sample_size_lp = 1000000;
+localparam sample_size_lp = sample_size_p;
 
 //create a mock first stage of 2 PE sorters - alreadt tested
 bitonic_sorter_pe preprocessor_1 (

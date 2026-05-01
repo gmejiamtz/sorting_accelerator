@@ -1,4 +1,7 @@
-module bitonic_sorter_pe_tb;
+module bitonic_sorter_pe_tb
+    import config_pkg::*;
+    import dv_pkg::*;
+;
 
 logic clk_i;
 logic resetn_i;
@@ -10,9 +13,9 @@ logic [31:0] val_1_i, val_2_i;
 logic [31:0] high_o,low_o;
 
 //period
-parameter realtime ClockPeriod = 20ns;
+parameter realtime ClockPeriod = clock_period_p;
 integer errors;
-localparam sample_size_lp = 1000000;
+localparam sample_size_lp = sample_size_p;
 
 bitonic_sorter_pe uut (
     .clk_i(clk_i),
