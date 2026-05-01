@@ -8,6 +8,7 @@ dv/bitonic_sorter_second_stage_tb.sv
 dv/bitonic_sorter_third_stage_tb.sv
 dv/bitonic_sorter_merger_4_elem_tb.sv
 dv/bitonic_sorter_merger_8_elem_tb.sv
+dv/bitonic_sorter_16_tb.sv
 
 --timing
 -j 0
