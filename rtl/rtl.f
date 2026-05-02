@@ -7,6 +7,7 @@
 -I${PICORV32_DIR}
 
 ${BASEJUMP_STL_DIR}/bsg_misc/bsg_counter_up_down.sv
+${BASEJUMP_STL_DIR}/bsg_mem/bsg_mem_1r1w_sync.sv
 ${ALEXFORENCICH_UART_DIR}/rtl/uart_rx.v
 ${ALEXFORENCICH_UART_DIR}/rtl/uart_tx.v
 ${ALEXFORENCICH_UART_DIR}/rtl/uart.v
@@ -35,3 +36,6 @@ rtl/bitonic_sorter_merger_4_elem.sv
 rtl/bitonic_sorter_merger_8_elem.sv
 rtl/bitonic_sorter_merger_16_elem.sv
 rtl/bitonic_sorter_16.sv
+rtl/bitonic_sorter_size_validator.sv
+rtl/bitonic_sorter_core.sv
+rtl/sipo_32_to_512.sv
