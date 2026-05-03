@@ -37,7 +37,15 @@ logic clear_addr;
 //Timeout Timer signals
 logic [31:0] timer_count;
 logic timer_inc, timer_reset;
-localparam timeout_cycle_count = 4294967295;
+//max int
+localparam timeout_cycle_count = 10000;
+//localparam timeout_cycle_count = 4294967295;
+
+//PISO Signals
+logic [31:0] piso_data_out;
+logic piso_transmit;
+logic piso_valid;
+logic piso_empty;
 
 
 always_ff @(posedge clk_i) begin : state_ff
@@ -89,7 +97,8 @@ always_comb begin : next_state_logic
     array_size_d = array_size_q;
     r_v_li = '0;
     clear_addr = '0;
-    
+    //piso signals
+    piso_transmit = 0;
     case (state_q)
         idle: begin
             ready_d = '1;
@@ -126,7 +135,7 @@ always_comb begin : next_state_logic
             ready_d = '1;
             timer_inc = '1;
             //if wrote to last cache line move to sort state on next state
-            if({14'b0,w_addr_li} == array_size_q[31:4]) begin
+            if({15'b0,w_addr_li} == array_size_q[31:4]) begin
                 state_d = sort;
                 timer_reset = '1;
                 clear_addr = '1;
@@ -136,22 +145,67 @@ always_comb begin : next_state_logic
             end
         end
 
-        sort:  state_d = transmit_left_bracket;
+        //TBA soon - need to understand how to reuse sorter 16 core for all other 2^n lengths
+        sort: state_d = transmit_left_bracket;
 
         transmit_left_bracket: begin //stay here for one cycle to send out the starting array sequence
             ready_d = '0;
             valid_d = '1;
             data_d = 32'h00_00_0a_5b; //string '\0\0\n\['
-            state_d = transmit_raw_int;
+            //read the bram
+            r_v_li = '1;
+            timer_inc = '1;
+            if(timer_count == timeout_cycle_count) begin
+                state_d = error;
+                error_code_d = 32'd8;
+            end else if (ready_i & valid_o) begin
+                state_d = transmit_raw_int;
+                timer_reset = 1;
+            end
         end
 
-        transmit_raw_int: begin //stay here for one cycle to send out the starting array sequence
+        transmit_raw_int: begin
             ready_d = '0;
-            valid_d = '1;
-            data_d = 32'h00_00_0a_5b; //string '\0\0\n\['
-            state_d = transmit_right_bracket;
+            valid_d = piso_valid;
+            data_d = piso_data_out;
+            piso_transmit = '1;
+            timer_inc = '1;
+            if(timer_count == timeout_cycle_count) begin
+                state_d = error;
+                error_code_d = 32'd8;
+            end else if (ready_i & valid_o) begin
+                //always do to comma
+                state_d = transmit_comma;
+                timer_reset = 1;
+            end
         end
 
+        transmit_comma: begin
+            ready_d = 0;
+            valid_d = 1;
+            timer_inc = '1;
+            if(timer_count == timeout_cycle_count) begin
+                state_d = error;
+                error_code_d = 32'd8;
+            end else if(piso_empty & ready_i & valid_o) begin //if PISO is empty refill the cache line by reading from BRAMn
+                //if you cant read anymore just do the ending string and go to idle
+                if({15'b0,r_addr_li} == (array_size_q[31:4])-28'd1) begin
+                    r_v_li = 0;
+                    data_d = 32'h5d_0a_00_00; //string '\]\n\0\0'
+                    state_d = idle;
+                end else begin  //go back to transmit an int
+                    r_v_li = '1;
+                    data_d = 32'h00_00_00_2c; //string '\0\0\0\,'
+                    state_d = transmit_raw_int;
+                end
+            end else if (!piso_empty & ready_i & valid_o) begin //if no timeout and not empty then just send comma and go back to sending ints
+                    r_v_li = '0;
+                    data_d = 32'h00_00_00_2c; //string '\0\0\0\,'
+                    state_d = transmit_raw_int;
+            end
+        end
+
+        //might be unused?
         transmit_right_bracket: begin //stay here for one cycle to send out the ending array sequence
             ready_d = '0;
             valid_d = '1;
@@ -232,11 +286,24 @@ bsg_mem_1r1w_sync #(
 //Creates the w_data for the bram
 sipo_32_to_512 sipo_inst (
     .clk_i(clk_i),
-    .resetn_i(resetn_i),
+    .resetn_i(resetn_i & !clear_addr),
     .data_i(packet_data_i),
     .valid_i(packet_valid_i & (state_q == load)),
     .data_o(w_data_li),
     .valid_o(w_v_li)
+);
+
+//Creates the raw ints from BRAM cache lines to send out to UART
+piso_512_to_32 piso_inst (
+    .clk_i(clk_i),
+    .resetn_i(resetn_i & !clear_addr),
+    .data_i(r_data_lo),
+    .valid_i(r_v_li),
+    .ready_o(piso_empty),
+    .transmit_i(piso_transmit),
+    .data_o(piso_data_out),
+    .valid_o(piso_valid),
+    .ready_i(ready_i & state_q == transmit_raw_int)
 );
 
 /* Assignments */

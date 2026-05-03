@@ -167,6 +167,31 @@ task automatic input_array_element(input [31:0] packet_i, output logic result_o)
     end
 endtask
 
+task automatic read_transmission(output logic result_o);
+    begin
+        integer test_timeout;
+        @(negedge clk_i);
+        ready_i = 1;
+        result_o = 0;
+        test_timeout = 0;
+        @(posedge clk_i);
+        while(uut.state_q != idle) begin
+            if(uut.state_d == error  || test_timeout == 100) begin
+                $display("LIKLEY TIMED OUT DURING TRANSMISSION!!!!");
+                result_o = 1;
+                break;
+            end
+            if(uut.state_q == transmit_raw_int) begin
+                $display("Is Int Valid: %b | Int Value: %h", valid_o, data_o);
+            end
+            @(posedge clk_i);
+            test_timeout++;
+        end
+    end
+    @(negedge clk_i);
+    ready_i = 0;
+endtask
+
 initial begin
     $dumpfile( "bitonic_sorter_core.fst" );
     $dumpvars;
@@ -190,6 +215,11 @@ initial begin
             errors++;
             break;
         end
+    end
+    read_transmission(task_result);
+    if(task_result) begin
+        $display("TIMEOUT!!");
+        errors++;
     end
     $finish;
 end

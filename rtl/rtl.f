@@ -39,3 +39,4 @@ rtl/bitonic_sorter_16.sv
 rtl/bitonic_sorter_size_validator.sv
 rtl/bitonic_sorter_core.sv
 rtl/sipo_32_to_512.sv
+rtl/piso_512_to_32.sv
