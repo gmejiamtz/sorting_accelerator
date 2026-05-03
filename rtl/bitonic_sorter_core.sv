@@ -149,13 +149,13 @@ always_comb begin : next_state_logic
             ready_d = '0;
             valid_d = '1;
             data_d = 32'h00_00_0a_5b; //string '\0\0\n\['
-            //read the bram
-            r_v_li = '1;
-            timer_inc = '1;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = 32'd8;
             end else if (ready_i & valid_o) begin
+                //read the bram
+                timer_inc = '1;
+                r_v_li = '1;
                 state_d = transmit_raw_int;
                 timer_reset = 1;
             end
@@ -166,6 +166,7 @@ always_comb begin : next_state_logic
             valid_d = piso_valid;
             data_d = piso_data_out;
             timer_inc = '1;
+            r_v_li = '0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = 32'd8;

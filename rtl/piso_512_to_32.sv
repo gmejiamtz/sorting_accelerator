@@ -98,6 +98,7 @@ always_comb begin
             if(shift_count == 5'd16) begin
                 state_d = idle;
                 valid_d = 0;
+                ready_d = 1;
                 reset_counter = 1;
             end else if(ready_i & valid_o) begin
                 inc_counter = 1;
