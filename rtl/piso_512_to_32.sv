@@ -4,7 +4,6 @@ module piso_512_to_32 (
     
     input [511:0] data_i,
     input         valid_i,     // Pulse to capture BRAM output
-    input         transmit_i, // Actually send out a 32 bit word
     output        ready_o,    // High when 16 words have been sent
     
     // Interface to UART/Downstream
@@ -94,17 +93,15 @@ always_comb begin
         loaded: begin
             reset_counter = 0;
             ready_d = 0;
+            valid_d = 1;
+            data_d = cache_line_q[511:480];
             if(shift_count == 5'd16) begin
                 state_d = idle;
                 valid_d = 0;
                 reset_counter = 1;
-            end else if (transmit_i) begin
-                if(ready_i & valid_o) begin
-                    inc_counter = 1;
-                    data_d = cache_line_q[511:480];
-                    valid_d = 1;
-                    cache_line_d = {cache_line_q[479:0], 32'h0};
-                end
+            end else if(ready_i & valid_o) begin
+                inc_counter = 1;
+                cache_line_d = {cache_line_q[479:0], 32'h0};
             end
         end
     endcase

@@ -43,7 +43,6 @@ localparam timeout_cycle_count = 10000;
 
 //PISO Signals
 logic [31:0] piso_data_out;
-logic piso_transmit;
 logic piso_valid;
 logic piso_empty;
 
@@ -97,8 +96,6 @@ always_comb begin : next_state_logic
     array_size_d = array_size_q;
     r_v_li = '0;
     clear_addr = '0;
-    //piso signals
-    piso_transmit = 0;
     case (state_q)
         idle: begin
             ready_d = '1;
@@ -168,7 +165,6 @@ always_comb begin : next_state_logic
             ready_d = '0;
             valid_d = piso_valid;
             data_d = piso_data_out;
-            piso_transmit = '1;
             timer_inc = '1;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
@@ -300,7 +296,6 @@ piso_512_to_32 piso_inst (
     .data_i(r_data_lo),
     .valid_i(r_v_li),
     .ready_o(piso_empty),
-    .transmit_i(piso_transmit),
     .data_o(piso_data_out),
     .valid_o(piso_valid),
     .ready_i(ready_i & state_q == transmit_raw_int)
