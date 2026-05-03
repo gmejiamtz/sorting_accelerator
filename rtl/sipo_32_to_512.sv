@@ -27,18 +27,18 @@ always_comb begin : data_comb
 end
 
 bsg_counter_up_down #(
-    .max_val_p(15),
+    .max_val_p(16),
     .init_val_p(0),
     .max_step_p(1)
-) read_addr_counter (
+) sipo_counter (
     .clk_i(clk_i),
-    .reset_i(!resetn_i),
+    .reset_i(!resetn_i | valid_o),
     .up_i(valid_i),
     .down_i(1'b0),
     .count_o(shift_count)
 );
 
-assign valid_o = valid_i & (shift_count == 5'd15);
+assign valid_o = valid_i & (shift_count == 5'd16);
 assign data_o = data_q;
 
 endmodule

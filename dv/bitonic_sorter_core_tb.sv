@@ -97,6 +97,69 @@ task automatic check_header(input [31:0] packet_i, output logic result_o);
                     result_o = '0;
                 end
             end
+            //reset valid and data on negedge of clock
+            @(negedge clk_i);
+            packet_data_i = '0;
+            packet_valid_i = '0;
+        end
+    end
+endtask
+
+task automatic check_size(input [31:0] packet_i, output logic result_o);
+    begin
+        @(negedge clk_i);
+        if (uut.state_q != size) begin
+            $display("check_size task expects core to be in size state");
+            result_o = '1;
+        end else begin
+            packet_valid_i = '1;
+            packet_data_i = packet_i;
+            @(posedge clk_i);
+            if(uut.size_valid_l) begin
+                $display("Expected FSM State Movement: size -> load");
+                if(uut.state_d != load) begin
+                    $display("FSM State Update FAILED! Went to state: %b", uut.state_d);
+                    result_o = '1;
+                end else begin
+                    $display("FSM State Update PASSED! Went to state: %b", uut.state_q);
+                    wait(uut.state_q == load);
+                    result_o = '0;
+                end
+            end else begin
+                $display("Expected FSM State Movement: size -> error");
+                if(uut.state_d != error) begin
+                    $display("FSM State Update FAILED! Went to state: %b", uut.state_q);
+                    result_o = '1;
+                end else begin
+                    $display("FSM State Update PASSED! Went to state: %b", uut.state_q);
+                    wait(uut.state_q == idle);
+                    result_o = '0;
+                end
+            end
+            //reset valid and data on negedge of clock
+            @(negedge clk_i);
+            packet_data_i = '0;
+            packet_valid_i = '0;
+        end
+    end
+endtask
+
+task automatic input_array_element(input [31:0] packet_i, output logic result_o);
+    begin
+        @(negedge clk_i);
+        if (uut.state_q != load) begin
+            $display("input_array_element task expects core to be in load state");
+            result_o = '1;
+        end else begin
+            packet_valid_i = '1;
+            packet_data_i = packet_i;
+            result_o = '0;
+            @(posedge clk_i);
+            if(uut.state_d == error) begin
+                $display("Load State is going to timeout!");
+                result_o = '1;
+            end
+            //reset valid and data on negedge of clock
             @(negedge clk_i);
             packet_data_i = '0;
             packet_valid_i = '0;
@@ -109,10 +172,24 @@ initial begin
     $dumpvars;
     $display("Beginning Bitonc Sorter Core Simulation");
     reset();
+    //a correct sequence into the FSM
     check_header(32'h6c_6f_61_64,task_result);
     if(task_result) begin
         $display("Failed the header check");
         errors++;
+    end
+    check_size(32'd16,task_result);
+    if(task_result) begin
+        $display("Failed the size check");
+        errors++;
+    end
+    while(uut.state_q == load) begin
+        input_array_element($urandom(),task_result);
+        if(task_result) begin
+            $display("Loading in an array element failed!");
+            errors++;
+            break;
+        end
     end
     $finish;
 end
