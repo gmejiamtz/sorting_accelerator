@@ -125,8 +125,8 @@ always_comb begin : next_state_logic
         load: begin
             ready_d = '1;
             timer_inc = '1;
-            //if writing to last cache line move to sort state on next state
-            if(w_v_li & ({14'b0,w_addr_li} == (array_size_q[31:4] - 1'b1))) begin
+            //if wrote to last cache line move to sort state on next state
+            if({14'b0,w_addr_li} == array_size_q[31:4]) begin
                 state_d = sort;
                 timer_reset = '1;
                 clear_addr = '1;

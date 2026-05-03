@@ -38,7 +38,7 @@ bsg_counter_up_down #(
     .count_o(shift_count)
 );
 
-assign valid_o = valid_i & (shift_count == 5'd16);
+assign valid_o = (shift_count == 5'd16);
 assign data_o = data_q;
 
 endmodule
