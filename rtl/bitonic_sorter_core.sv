@@ -222,7 +222,7 @@ always_comb begin : next_state_logic
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = 32'd8;
-            end else if (ready_i & valid_o) begin
+            end else if (ready_i & piso_valid) begin
                 //always do to comma
                 state_d = transmit_comma;
                 timer_reset = 1;
@@ -351,7 +351,7 @@ piso_512_to_32 piso_inst (
     .ready_o(piso_empty),
     .data_o(piso_data_out),
     .valid_o(piso_valid),
-    .ready_i(ready_i & state_q == transmit_raw_int)
+    .ready_i(ready_i & (state_q == transmit_raw_int))
 );
 
 /* Assignments */

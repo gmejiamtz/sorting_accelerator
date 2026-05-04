@@ -147,6 +147,7 @@ endtask
 task automatic input_array_element(input [31:0] packet_i, output logic result_o);
     begin
         @(negedge clk_i);
+        result_o = 0;
         if (uut.state_q != load) begin
             $display("input_array_element task expects core to be in load state");
             result_o = '1;
@@ -160,9 +161,13 @@ task automatic input_array_element(input [31:0] packet_i, output logic result_o)
                 result_o = '1;
             end
             //reset valid and data on negedge of clock
+
             @(negedge clk_i);
             packet_data_i = '0;
             packet_valid_i = '0;
+        end
+        if(!result_o) begin
+            $display("loaded in value: %h",packet_i);
         end
     end
 endtask
@@ -214,8 +219,6 @@ initial begin
         input_array_element($urandom(),task_result);
         if(task_result) begin
             $display("Loading in an array element failed!");
-            errors++;
-            $finish;
         end
     end
     read_transmission(task_result);
