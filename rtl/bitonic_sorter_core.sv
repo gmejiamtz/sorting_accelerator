@@ -31,7 +31,10 @@ logic size_valid_l;
 //BRAM signals
 logic [addr_width_lp-1:0] w_addr_li, r_addr_li;
 logic [data_width_lp-1:0] w_data_li, r_data_lo;
-logic                     w_v_li, r_v_li;
+logic                     w_v_li, r_v_li;   //BRAM read enable and write enable
+logic                     w_v_li_q, r_v_li_q;   //BRAM read enable and write enable
+logic                     w_v_li_d, r_v_li_d;   //BRAM read enable and write enable
+
 logic clear_addr;
 
 //Timeout Timer signals
@@ -83,6 +86,22 @@ always_ff @(posedge clk_i) begin : array_size_ff
     end
 end
 
+always_ff @(posedge clk_i) begin : bram_read_en
+    if(!resetn_i) begin
+        r_v_li_q <= '0;
+    end else begin
+        r_v_li_q <= r_v_li_d;
+    end
+end
+
+always_ff @(posedge clk_i) begin : bram_write_en
+    if(!resetn_i) begin
+        w_v_li_q <= '0;
+    end else begin
+        w_v_li_q <= w_v_li_d;
+    end
+end
+
 always_comb begin : next_state_logic
     //default to current state and 0 out data, valid, ready
     state_d = state_q;
@@ -94,7 +113,7 @@ always_comb begin : next_state_logic
     //defaults of intermiate logic busses
     error_code_d = error_code_q;
     array_size_d = array_size_q;
-    r_v_li = '0;
+    r_v_li_d = '0;
     clear_addr = '0;
     case (state_q)
         idle: begin
@@ -152,11 +171,44 @@ always_comb begin : next_state_logic
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = 32'd8;
+                timer_reset = 1;
             end else if (ready_i & valid_o) begin
                 //read the bram
                 timer_inc = '1;
-                r_v_li = '1;
-                state_d = transmit_raw_int;
+                r_v_li_d = '1;
+                state_d = bram_read;
+                timer_reset = 1;
+            end
+        end
+
+        bram_read: begin
+            ready_d = '0;
+            valid_d = '0;
+            data_d = '0;
+            timer_inc = 1;
+            r_v_li_d = 0;
+            if(timer_count == timeout_cycle_count) begin
+                state_d = error;
+                error_code_d = 32'd8;
+                timer_reset = 1;
+            end else begin
+                state_d = bram_data_valid;  //data will be valid for a cycle
+                timer_reset = 1;
+            end
+        end
+
+        bram_data_valid: begin
+            ready_d = '0;
+            valid_d = '0;
+            data_d = '0;
+            timer_inc = 1;
+            r_v_li_d = 0;
+            if(timer_count == timeout_cycle_count) begin
+                state_d = error;
+                error_code_d = 32'd8;
+                timer_reset = 1;
+            end else begin
+                state_d = transmit_raw_int;  //data is to be sent by the PISO
                 timer_reset = 1;
             end
         end
@@ -166,7 +218,7 @@ always_comb begin : next_state_logic
             valid_d = piso_valid;
             data_d = piso_data_out;
             timer_inc = '1;
-            r_v_li = '0;
+            r_v_li_d = '0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = 32'd8;
@@ -186,17 +238,17 @@ always_comb begin : next_state_logic
                 error_code_d = 32'd8;
             end else if(piso_empty & ready_i & valid_o) begin //if PISO is empty refill the cache line by reading from BRAMn
                 //if you cant read anymore just do the ending string and go to idle
-                if({15'b0,r_addr_li} == (array_size_q[31:4])-28'd1) begin
-                    r_v_li = 0;
+                if({15'b0,r_addr_li} == (array_size_q[31:4])) begin
+                    r_v_li_d = 0;
                     data_d = 32'h5d_0a_00_00; //string '\]\n\0\0'
                     state_d = idle;
-                end else begin  //go back to transmit an int
-                    r_v_li = '1;
+                end else begin  //go back to read bram
                     data_d = 32'h00_00_00_2c; //string '\0\0\0\,'
-                    state_d = transmit_raw_int;
+                    r_v_li_d = 1;
+                    state_d = bram_read;
                 end
             end else if (!piso_empty & ready_i & valid_o) begin //if no timeout and not empty then just send comma and go back to sending ints
-                    r_v_li = '0;
+                    r_v_li_d = '0;
                     data_d = 32'h00_00_00_2c; //string '\0\0\0\,'
                     state_d = transmit_raw_int;
             end
@@ -287,7 +339,7 @@ sipo_32_to_512 sipo_inst (
     .data_i(packet_data_i),
     .valid_i(packet_valid_i & (state_q == load)),
     .data_o(w_data_li),
-    .valid_o(w_v_li)
+    .valid_o(w_v_li_d)
 );
 
 //Creates the raw ints from BRAM cache lines to send out to UART
@@ -295,7 +347,7 @@ piso_512_to_32 piso_inst (
     .clk_i(clk_i),
     .resetn_i(resetn_i & !clear_addr),
     .data_i(r_data_lo),
-    .valid_i(r_v_li),
+    .valid_i(state_q == bram_data_valid),
     .ready_o(piso_empty),
     .data_o(piso_data_out),
     .valid_o(piso_valid),
@@ -307,5 +359,7 @@ piso_512_to_32 piso_inst (
 assign data_o = data_q;
 assign packet_ready_o = ready_q;
 assign valid_o = valid_q;
+assign w_v_li = w_v_li_q;
+assign r_v_li = r_v_li_q;
 
 endmodule

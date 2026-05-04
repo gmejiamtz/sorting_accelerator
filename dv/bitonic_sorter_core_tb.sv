@@ -181,7 +181,7 @@ task automatic read_transmission(output logic result_o);
                 result_o = 1;
                 break;
             end
-            if(uut.state_q == transmit_raw_int) begin
+            if(uut.state_q == transmit_comma) begin
                 $display("Is Int Valid: %b | Int Value: %h", valid_o, data_o);
             end
             @(posedge clk_i);
@@ -202,24 +202,27 @@ initial begin
     if(task_result) begin
         $display("Failed the header check");
         errors++;
+        $finish;
     end
     check_size(32'd16,task_result);
     if(task_result) begin
         $display("Failed the size check");
         errors++;
+        $finish;
     end
     while(uut.state_q == load) begin
         input_array_element($urandom(),task_result);
         if(task_result) begin
             $display("Loading in an array element failed!");
             errors++;
-            break;
+            $finish;
         end
     end
     read_transmission(task_result);
     if(task_result) begin
         $display("TIMEOUT!!");
         errors++;
+        $finish;
     end
     $finish;
 end

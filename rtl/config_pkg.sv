@@ -8,6 +8,8 @@ typedef enum logic [3:0] {
     load,
     sort,
     transmit_left_bracket,
+    bram_read,  //using sync mem requies the extra state
+    bram_data_valid, //sync data is only valid for one cycle after ir being read
     transmit_raw_int,
     transmit_comma,
     transmit_right_bracket,
