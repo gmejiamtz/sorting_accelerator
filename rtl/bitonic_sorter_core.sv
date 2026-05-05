@@ -172,10 +172,12 @@ always_comb begin : next_state_logic
                 state_d = error;
                 error_code_d = 32'd8;
                 timer_reset = 1;
+                valid_d = 0;
             end else if (ready_i & valid_o) begin
                 //read the bram
                 timer_inc = '1;
                 r_v_li_d = '1;
+                valid_d = 0;
                 state_d = bram_read;
                 timer_reset = 1;
             end

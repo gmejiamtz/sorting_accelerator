@@ -144,57 +144,76 @@ task automatic check_size(input [31:0] packet_i, output logic result_o);
     end
 endtask
 
-task automatic input_array_element(input [31:0] packet_i, output logic result_o);
+task automatic input_array(output logic result_o);
     begin
         @(negedge clk_i);
         result_o = 0;
         if (uut.state_q != load) begin
-            $display("input_array_element task expects core to be in load state");
+            $display("input_array task expects core to be in load state");
             result_o = '1;
         end else begin
-            packet_valid_i = '1;
-            packet_data_i = packet_i;
-            result_o = '0;
-            @(posedge clk_i);
-            if(uut.state_d == error) begin
-                $display("Load State is going to timeout!");
-                result_o = '1;
+            for (int i = 0; i < uut.array_size_q; i++) begin
+                packet_valid_i = '1;
+                packet_data_i = $urandom();
+                @(posedge clk_i);
+                if(uut.state_d == error) begin
+                    $display("Load State is going to timeout!");
+                    result_o = '1;
+                    break;
+                end
+                @(negedge clk_i);   //negedge on next iteration or exit
+                packet_data_i = '0;
+                packet_valid_i = '0;
             end
             //reset valid and data on negedge of clock
-
             @(negedge clk_i);
             packet_data_i = '0;
             packet_valid_i = '0;
+            wait(uut.state_q == sort);
         end
-        if(!result_o) begin
-            $display("loaded in value: %h",packet_i);
+    end
+endtask
+
+task automatic run_sorter(output logic result_o);
+    begin
+        @(negedge clk_i);
+        result_o = 0;
+        if(uut.state_q != sort) begin
+            $display("run_sorter task expects core to be in sort state");
+            result_o = '1;
+        end else begin
+            $display("Sorter STATE TBA");
+            @(posedge clk_i);
         end
+        @(negedge clk_i);
+        packet_data_i = '0;
+        packet_valid_i = '0;
     end
 endtask
 
 task automatic read_transmission(output logic result_o);
     begin
-        integer test_timeout;
         @(negedge clk_i);
-        ready_i = 1;
-        result_o = 0;
-        test_timeout = 0;
-        @(posedge clk_i);
-        while(uut.state_q != idle) begin
-            if(uut.state_d == error  || test_timeout == 100) begin
-                $display("LIKLEY TIMED OUT DURING TRANSMISSION!!!!");
-                result_o = 1;
-                break;
+        if(uut.state_q == transmit_left_bracket) begin
+            result_o = 0;
+            ready_i = 1;
+            while(uut.state_q != idle) begin
+                if(uut.state_d == error) begin
+                    $display("LIKLEY TIMED OUT DURING TRANSMISSION!!!!");
+                    result_o = 1;
+                    break;
+                end
+                @(posedge clk_i);
+                if(ready_i & valid_o) begin
+                    $display("Sent Word: 0x%h", data_o);
+                end
             end
-            if(uut.state_q == transmit_comma) begin
-                $display("Is Int Valid: %b | Int Value: %h", valid_o, data_o);
-            end
-            @(posedge clk_i);
-            test_timeout++;
+            @(negedge clk_i);
+            ready_i = 0;
+        end else begin
+            $display("Core does not have message to transmit!!!");
         end
     end
-    @(negedge clk_i);
-    ready_i = 0;
 endtask
 
 initial begin
@@ -215,15 +234,21 @@ initial begin
         errors++;
         $finish;
     end
-    while(uut.state_q == load) begin
-        input_array_element($urandom(),task_result);
-        if(task_result) begin
-            $display("Loading in an array element failed!");
-        end
+    input_array(task_result);
+    if(task_result) begin
+        $display("INPUT ARRAY TIMEOUT!!");
+        errors++;
+        $finish;
+    end
+    run_sorter(task_result);
+    if(task_result) begin
+        $display("CORE SORT TIMEOUT!!");
+        errors++;
+        $finish;
     end
     read_transmission(task_result);
     if(task_result) begin
-        $display("TIMEOUT!!");
+        $display("READ TRANSMISSION TIMEOUT!!");
         errors++;
         $finish;
     end
