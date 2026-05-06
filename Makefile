@@ -63,7 +63,7 @@ synth/yosys_generic/build/synth.v: synth/build/rtl.sv2v.v synth/yosys_generic/yo
 	yosys -p 'tcl synth/yosys_generic/yosys.tcl synth/build/rtl.sv2v.v' -l synth/yosys_generic/build/yosys.log
 
 trellis_ulx3s_gls: synth/trellis_ulx3s/build/synth.v
-	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f synth/trellis_ulx3s/gls.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
+	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f synth/trellis_ulx3s/gls.f -f dv/dv.f --binary -Wno-fatal  -y $(ALEXFORENCICH_UART_DIR)/rtl --top ${TOP}
 	./${TOP}_$@_dir/V${TOP} +verilator+rand+reset+2
 
 synth/trellis_ulx3s/build/synth.v synth/trellis_ulx3s/build/synth.json: synth/build/rtl.sv2v.v synth/trellis_ulx3s/ulx3s.v synth/trellis_ulx3s/yosys.tcl
