@@ -210,6 +210,7 @@ always_comb begin : next_state_logic
                 state_d = bram_read;
                 timer_reset = '1;
                 clear_w_addr = '1;
+                clear_r_addr = 1;
             end else if (timer_count == timeout_cycle_count) begin //timeout
                 state_d = error;
                 error_code_d = error_code_timeout;
@@ -229,17 +230,17 @@ always_comb begin : next_state_logic
             sorter_start = 0;
             if(array_size_q != 32'd16) begin
                 state_d = transmit_left_bracket;
-            end else if(sorter_done_q & {15'b0,w_addr_li} == array_size_q[31:4]) begin
+            end else if(sorter_done_q & {15'b0,r_addr_li} == array_size_q[31:4]) begin
                 state_d = write_back;
                 w_v_li_d = 1;
                 end_of_sort_d = 1;
-            end else if (sorter_done_q & {15'b0,w_addr_li} != array_size_q[31:4]) begin
+            end else if (sorter_done_q & {15'b0,r_addr_li} != array_size_q[31:4]) begin
                 state_d = write_back;
                 w_v_li_d = 1;
             end
         end
 
-        write_back_done: begin
+        write_back: begin
             w_v_li_d = 0;
             //if done then restart reads
             if(end_of_sort_q) begin
