@@ -69,6 +69,7 @@ endtask
 task automatic check_header(input [31:0] packet_i, output logic result_o);
     begin
         @(negedge clk_i);
+        ready_i = 0;
         if (uut.state_q != idle) begin
             $display("check_header task expects core to be in idle state");
             result_o = '1;
@@ -88,6 +89,8 @@ task automatic check_header(input [31:0] packet_i, output logic result_o);
                 end
             end else begin
                 $display("Expected FSM State Movement: idle -> error");
+                ready_i = 1;
+                @(posedge clk_i);
                 if(uut.state_d != error) begin
                     $display("FSM State Update FAILED! Went to state: %b", uut.state_q);
                     result_o = '1;
@@ -101,6 +104,7 @@ task automatic check_header(input [31:0] packet_i, output logic result_o);
             @(negedge clk_i);
             packet_data_i = '0;
             packet_valid_i = '0;
+            ready_i = 0;
         end
     end
 endtask
@@ -108,6 +112,7 @@ endtask
 task automatic check_size(input [31:0] packet_i, output logic result_o);
     begin
         @(negedge clk_i);
+        ready_i = 0;
         if (uut.state_q != size) begin
             $display("check_size task expects core to be in size state");
             result_o = '1;
@@ -126,6 +131,8 @@ task automatic check_size(input [31:0] packet_i, output logic result_o);
                     result_o = '0;
                 end
             end else begin
+                ready_i = 1;
+                @(posedge clk_i);
                 $display("Expected FSM State Movement: size -> error");
                 if(uut.state_d != error) begin
                     $display("FSM State Update FAILED! Went to state: %b", uut.state_q);
@@ -140,6 +147,7 @@ task automatic check_size(input [31:0] packet_i, output logic result_o);
             @(negedge clk_i);
             packet_data_i = '0;
             packet_valid_i = '0;
+            ready_i = 0;
         end
     end
 endtask
@@ -148,38 +156,63 @@ task automatic input_array(output logic result_o);
     begin
         @(negedge clk_i);
         result_o = 0;
+        ready_i = 1;
         if (uut.state_q != load) begin
             $display("input_array task expects core to be in load state");
             result_o = '1;
         end else begin
+            $display("Loading %d elements!",uut.array_size_q);
             for (int i = 0; i < uut.array_size_q; i++) begin
+                wait(uut.packet_ready_o);   //wait until the core can take stuff
                 packet_valid_i = '1;
                 packet_data_i = $urandom();
+                $display("Index %d | Loading %h", i, packet_data_i);
                 @(posedge clk_i);
                 if(uut.state_d == error) begin
                     $display("Load State is going to timeout!");
                     result_o = '1;
+                    @(posedge clk_i);    
                     break;
                 end
                 @(negedge clk_i);   //negedge on next iteration or exit
                 packet_data_i = '0;
                 packet_valid_i = '0;
             end
+            if(uut.state_d == error) begin
+                    $display("Load State is going to timeout!");
+                    result_o = '1;
+                    @(posedge clk_i);    
+                end
             //reset valid and data on negedge of clock
-            @(negedge clk_i);
+            if(!result_o) begin
+                $display("Done loading %d elements", uut.array_size_q);
+            end
+            ready_i = 0;
             packet_data_i = '0;
             packet_valid_i = '0;
-            wait(uut.state_q == sort);
+
+            wait(uut.state_d == sort || uut.state_d == error);
+            @(negedge clk_i);
+            /* - this block hangs when array is 64
+            while(uut.state_d != sort) begin
+                @(negedge clk_i);
+            end
+            */
+            /* - this fails when array is 16
+            while(uut.state_q != sort) begin
+                @(posedge clk_i);
+            end
+            */
         end
     end
 endtask
 
 task automatic run_sorter(output logic result_o);
     begin
-        @(negedge clk_i);
+        @(negedge clk_i)
         result_o = 0;
         if(uut.state_q != sort) begin
-            $display("run_sorter task expects core to be in sort state");
+            $display("run_sorter task expects core to be in sort state, it is at state %b", uut.state_q);
             result_o = '1;
         end else begin
             $display("Sorter STATE TBA");
@@ -222,13 +255,78 @@ initial begin
     $display("Beginning Bitonc Sorter Core Simulation");
     reset();
     //a correct sequence into the FSM
-    check_header(32'h6c_6f_61_64,task_result);
+    $display("Testing an expected working sequence of the core");
+    check_header(header_string,task_result);
     if(task_result) begin
         $display("Failed the header check");
         errors++;
         $finish;
     end
     check_size(32'd16,task_result);
+    if(task_result) begin
+        $display("Failed the size check");
+        errors++;
+        $finish;
+    end
+    input_array(task_result);
+    if(task_result) begin
+        $display("INPUT ARRAY TIMEOUT!!");
+        errors++;
+        $finish;
+    end
+    run_sorter(task_result);
+    if(task_result) begin
+        $display("CORE SORT TIMEOUT!!");
+        errors++;
+        $finish;
+    end
+    read_transmission(task_result);
+    if(task_result) begin
+        $display("READ TRANSMISSION TIMEOUT!!");
+        errors++;
+        $finish;
+    end
+    $display("Testing Bad headers");
+    wait(uut.state_q == idle);
+    check_header(32'h0, task_result);
+    if(task_result) begin
+        $display("An incorrect header was read as correct, FAILED!");
+        errors++;
+        $finish;
+    end
+    $display("Testing Bad Sizes");
+    check_header(header_string, task_result);
+    if(task_result) begin
+        $display("Failed the header check");
+        errors++;
+        $finish;
+    end
+    check_size(32'd15, task_result);
+    if(task_result) begin
+        $display("Failed the size check");
+        errors++;
+        $finish;
+    end
+    check_header(header_string, task_result);
+    if(task_result) begin
+        $display("Failed the header check");
+        errors++;
+        $finish;
+    end
+    check_size(32'd33, task_result);
+    if(task_result) begin
+        $display("Failed the size check");
+        errors++;
+        $finish;
+    end
+    $display("Testing Size 64 Array");
+    check_header(header_string, task_result);
+    if(task_result) begin
+        $display("Failed the header check");
+        errors++;
+        $finish;
+    end
+    check_size(32'd64, task_result);
     if(task_result) begin
         $display("Failed the size check");
         errors++;
@@ -262,7 +360,7 @@ final begin
     end else begin
         $display("Passed with %d errors!", errors);
     end
-    @(posedge clk_i);
+    //@(posedge clk_i);
 end
 
 endmodule

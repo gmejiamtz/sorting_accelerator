@@ -41,13 +41,16 @@ logic clear_addr;
 logic [31:0] timer_count;
 logic timer_inc, timer_reset;
 //max int
-localparam timeout_cycle_count = 10000;
+localparam timeout_cycle_count = 100;
 //localparam timeout_cycle_count = 4294967295;
 
 //PISO Signals
 logic [31:0] piso_data_out;
 logic piso_valid;
 logic piso_empty;
+
+//SIPO Signals
+logic sipo_full, sipo_empty;
 
 
 always_ff @(posedge clk_i) begin : state_ff
@@ -114,18 +117,22 @@ always_comb begin : next_state_logic
     error_code_d = error_code_q;
     array_size_d = array_size_q;
     r_v_li_d = '0;
+    w_v_li_d = 0;
     clear_addr = '0;
     case (state_q)
         idle: begin
             ready_d = '1;
             array_size_d = '0;
             error_code_d = '0;
+            clear_addr = 1;
+            timer_reset = 1;
             if(packet_ready_o & packet_valid_i) begin
-                if(packet_data_i == 32'h6c_6f_61_64) begin
+                if(packet_data_i == header_string) begin
                     state_d = size;
+                    timer_reset = 1;
                 end else begin
                     state_d = error;
-                    error_code_d = 32'h4;
+                    error_code_d = error_code_bad_header;
                 end
             end
         end
@@ -140,16 +147,15 @@ always_comb begin : next_state_logic
                 timer_reset = '1;
             end else if (timer_count == timeout_cycle_count) begin  //timeout
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
             end else if (packet_ready_o & packet_valid_i & ~size_valid_l) begin    //bad size
                 state_d = error;
-                error_code_d = 32'd16;
+                error_code_d = error_code_bad_size;
             end
         end
 
         load: begin
-            ready_d = '1;
-            timer_inc = '1;
+            w_v_li_d = sipo_full;
             //if wrote to last cache line move to sort state on next state
             if({15'b0,w_addr_li} == array_size_q[31:4]) begin
                 state_d = sort;
@@ -157,7 +163,13 @@ always_comb begin : next_state_logic
                 clear_addr = '1;
             end else if (timer_count == timeout_cycle_count) begin //timeout
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
+            end else if (sipo_full) begin
+                timer_inc = '1;
+                ready_d = 0;
+            end else begin
+                timer_inc = '1;
+                ready_d = 1;
             end
         end
 
@@ -167,10 +179,10 @@ always_comb begin : next_state_logic
         transmit_left_bracket: begin //stay here for one cycle to send out the starting array sequence
             ready_d = '0;
             valid_d = '1;
-            data_d = 32'h00_00_0a_5b; //string '\0\0\n\['
+            data_d = left_bracket_string; 
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
                 timer_reset = 1;
                 valid_d = 0;
             end else if (ready_i & valid_o) begin
@@ -191,7 +203,7 @@ always_comb begin : next_state_logic
             r_v_li_d = 0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
                 timer_reset = 1;
             end else begin
                 state_d = bram_data_valid;  //data will be valid for a cycle
@@ -207,7 +219,7 @@ always_comb begin : next_state_logic
             r_v_li_d = 0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
                 timer_reset = 1;
             end else begin
                 state_d = transmit_raw_int;  //data is to be sent by the PISO
@@ -223,7 +235,7 @@ always_comb begin : next_state_logic
             r_v_li_d = '0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
             end else if (ready_i & piso_valid) begin
                 //always do to comma
                 state_d = transmit_comma;
@@ -237,21 +249,21 @@ always_comb begin : next_state_logic
             timer_inc = '1;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
-                error_code_d = 32'd8;
+                error_code_d = error_code_timeout;
             end else if(piso_empty & ready_i & valid_o) begin //if PISO is empty refill the cache line by reading from BRAMn
                 //if you cant read anymore just do the ending string and go to idle
                 if({15'b0,r_addr_li} == (array_size_q[31:4])) begin
                     r_v_li_d = 0;
-                    data_d = 32'h5d_0a_00_00; //string '\]\n\0\0'
+                    data_d = right_bracket_string;
                     state_d = idle;
                 end else begin  //go back to read bram
-                    data_d = 32'h00_00_00_2c; //string '\0\0\0\,'
+                    data_d = comma_string;
                     r_v_li_d = 1;
                     state_d = bram_read;
                 end
             end else if (!piso_empty & ready_i & valid_o) begin //if no timeout and not empty then just send comma and go back to sending ints
                     r_v_li_d = '0;
-                    data_d = 32'h00_00_00_2c; //string '\0\0\0\,'
+                    data_d = comma_string;
                     state_d = transmit_raw_int;
             end
         end
@@ -264,9 +276,24 @@ always_comb begin : next_state_logic
             state_d = idle;
         end
 
-        error: state_d = error;
+        error: begin
+            ready_d = 0;
+            valid_d = 1;
+            data_d = error_code_q;
+            //if can send an error code then reset state to idle and reset error code register
+            if(ready_i & valid_o) begin
+                state_d = idle;
+                data_d = '0;
+                valid_d = '0;
+                error_code_d = '0;
+            end
+        end
 
-        default: state_d = error;
+        //if here set error code to all ones and go to error and back to idle
+        default: begin
+            state_d = error;
+            error_code_d = '1;
+        end
 
     endcase
 end
@@ -307,9 +334,9 @@ bsg_counter_up_down #(
 );
 
 bsg_counter_up_down #(
-    .max_val_p(timeout_cycle_count),
-    .init_val_p(0),
-    .max_step_p(1)
+    .max_val_p(32'h7fff_ffff),
+    .init_val_p(32'd0),
+    .max_step_p(32'd1)
 ) timeout_counter (
     .clk_i(clk_i),
     .reset_i(!resetn_i | timer_reset),
@@ -340,8 +367,10 @@ sipo_32_to_512 sipo_inst (
     .resetn_i(resetn_i & !clear_addr),
     .data_i(packet_data_i),
     .valid_i(packet_valid_i & (state_q == load)),
+    .ready_o(sipo_empty),
     .data_o(w_data_li),
-    .valid_o(w_v_li_d)
+    .valid_o(sipo_full),
+    .ready_i(1'b1)  //bram always ready
 );
 
 //Creates the raw ints from BRAM cache lines to send out to UART
@@ -361,7 +390,7 @@ piso_512_to_32 piso_inst (
 assign data_o = data_q;
 assign packet_ready_o = ready_q;
 assign valid_o = valid_q;
-assign w_v_li = w_v_li_q;
+assign w_v_li = w_v_li_d;
 assign r_v_li = r_v_li_q;
 
 endmodule
