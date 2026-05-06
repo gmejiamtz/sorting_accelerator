@@ -62,6 +62,9 @@ logic sorter_start;
 logic sorter_done_d, sorter_done_q;
 
 //signal that the sorter is done done
+logic [31:0] sorter_counter;
+logic sorter_counter_inc;
+logic sorter_counter_reset;
 logic end_of_sort_d, end_of_sort_q;
 
 always_ff @(posedge clk_i) begin : state_ff
@@ -166,6 +169,8 @@ always_comb begin : next_state_logic
     sorter_start = 0;
     piso_start_d = 0;
     end_of_sort_d = end_of_sort_q;
+    sorter_counter_inc = 0;
+    sorter_counter_reset = 0;
     case (state_q)
         idle: begin
             ready_d = '1;
@@ -175,6 +180,7 @@ always_comb begin : next_state_logic
             clear_r_addr = 1;
             timer_reset = 1;
             end_of_sort_d = 0;
+            sorter_counter_reset = 1;
             if(packet_ready_o & packet_valid_i) begin
                 if(packet_data_i == header_string) begin
                     state_d = size;
@@ -194,7 +200,7 @@ always_comb begin : next_state_logic
                 array_size_d = packet_data_i;
                 state_d = load;
                 timer_reset = '1;
-            end else if (timer_count == timeout_cycle_count) begin  //timeout
+            end else if (timer_count >= timeout_cycle_count) begin  //timeout
                 state_d = error;
                 error_code_d = error_code_timeout;
             end else if (packet_ready_o & packet_valid_i & ~size_valid_l) begin    //bad size
@@ -206,12 +212,12 @@ always_comb begin : next_state_logic
         load: begin
             w_v_li_d = sipo_full;
             //if wrote to last cache line move to read_bram
-            if({15'b0,w_addr_li} == array_size_q[31:4]) begin
+            if({15'b0,w_addr_li} >= array_size_q[31:4]) begin
                 state_d = bram_read;
                 timer_reset = '1;
                 clear_w_addr = '1;
                 clear_r_addr = 1;
-            end else if (timer_count == timeout_cycle_count) begin //timeout
+            end else if (timer_count >= timeout_cycle_count) begin //timeout
                 state_d = error;
                 error_code_d = error_code_timeout;
             end else if (sipo_full) begin
@@ -230,20 +236,17 @@ always_comb begin : next_state_logic
             sorter_start = 0;
             if(array_size_q != 32'd16) begin
                 state_d = transmit_left_bracket;
-            end else if(sorter_done_q & {15'b0,r_addr_li} == array_size_q[31:4]) begin
+            end else if(sorter_done_q) begin
                 state_d = write_back;
                 w_v_li_d = 1;
-                end_of_sort_d = 1;
-            end else if (sorter_done_q & {15'b0,r_addr_li} != array_size_q[31:4]) begin
-                state_d = write_back;
-                w_v_li_d = 1;
+                sorter_counter_inc = 1;
             end
         end
 
         write_back: begin
             w_v_li_d = 0;
             //if done then restart reads
-            if(end_of_sort_q) begin
+            if(sorter_counter >= array_size_q[31:4]) begin
                 clear_r_addr = 1;
                 clear_w_addr = 1;
                 state_d = transmit_left_bracket;
@@ -274,14 +277,14 @@ always_comb begin : next_state_logic
             data_d = '0;
             timer_inc = 1;
             r_v_li_d = 0;
-            if(timer_count == timeout_cycle_count) begin
+            if(timer_count >= timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
                 timer_reset = 1;
-            //if we just read the first line we go to sort
-            end else if ({15'b0, r_addr_li} == 32'd0 & !end_of_sort_q) begin
+            //if not done sorting keep sorting
+            end else if (!(sorter_counter >= array_size_q[31:4])) begin
                 state_d = sort;
-                sorter_start = 1; 
+                sorter_start = 1;
             end else begin
                 state_d = transmit_raw_int;  //data is to be sent by the PISO
                 piso_start_d = 1;             //piso should start
@@ -293,7 +296,7 @@ always_comb begin : next_state_logic
             ready_d = '0;
             valid_d = '1;
             data_d = left_bracket_string; 
-            if(timer_count == timeout_cycle_count) begin
+            if(timer_count >= timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
                 timer_reset = 1;
@@ -314,7 +317,7 @@ always_comb begin : next_state_logic
             data_d = piso_data_out;
             timer_inc = '1;
             r_v_li_d = '0;
-            if(timer_count == timeout_cycle_count) begin
+            if(timer_count >= timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
             end else if (ready_i & piso_valid) begin
@@ -328,12 +331,12 @@ always_comb begin : next_state_logic
             ready_d = 0;
             valid_d = 1;
             timer_inc = '1;
-            if(timer_count == timeout_cycle_count) begin
+            if(timer_count >= timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
             end else if(piso_empty & ready_i & valid_o) begin //if PISO is empty refill the cache line by reading from BRAMn
                 //if you cant read anymore just do the ending string and go to idle
-                if({15'b0,r_addr_li} == (array_size_q[31:4])) begin
+                if({15'b0,r_addr_li} >= (array_size_q[31:4])) begin
                     r_v_li_d = 0;
                     clear_r_addr = 1;
                     data_d = right_bracket_string;
@@ -422,6 +425,22 @@ bsg_counter_up_down #(
     .up_i(timer_inc),
     .down_i(1'b0),
     .count_o(timer_count)
+);
+
+bsg_counter_up_down #(
+    .max_val_p(4096),
+    .init_val_p(0),
+    .max_step_p(1)
+) sorter_counter_inst (
+    .clk_i(clk_i)
+    ,.reset_i(!resetn_i | sorter_counter_reset)
+
+    // Control Signals
+    ,.up_i(sorter_counter_inc)
+    ,.down_i(1'b0)
+    
+    // Counter Output
+    ,.count_o(sorter_counter)
 );
 
 bsg_mem_1r1w_sync #(

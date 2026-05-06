@@ -17,7 +17,7 @@ ${ALEXFORENCICH_UART_DIR}/rtl/uart.v
 //////${VERILOG_AXI_DIR}/rtl/axil_interconnect.v
 //////${VERILOG_AXI_DIR}/rtl/arbiter.v
 //////${VERILOG_AXI_DIR}/rtl/priority_encoder.v
-${VERILOG_AXIS_DIR}/rtl/axis_fifo.v
+${VERILOG_AXIS_DIR}/rtl/axis_pipeline_fifo.v
 //rtl/axil_rom.v
 rtl/config_pkg.sv
 rtl/pico_to_mems_and_uart.v

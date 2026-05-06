@@ -3,8 +3,7 @@ module top(
     input reset_i,
     input rx_i,
     input sw,
-    output tx_o,
-	output [7:0] led
+    output tx_o
 );
 
 //RX to FIFO signals
@@ -12,7 +11,7 @@ logic [7:0] rx_to_fifo_data;
 logic rx_to_fifo_valid, fifo_to_rx_ready;
 
 //FIFO to SIPO
-logic [31:0] fifo_to_sipo_data;
+logic [7:0] fifo_to_sipo_data;
 logic fifo_to_sipo_valid, sipo_to_fifo_ready;
 
 //SIPO to FIFO
@@ -42,7 +41,7 @@ logic fifo_to_tx_valid, tx_to_fifo_ready;
 
 uart_rx #(.DATA_WIDTH(8)) uart_rx_inst (
     .clk(clk_i),
-    .rst(!reset_i),
+    .rst(reset_i),
     .m_axis_tdata(rx_to_fifo_data),
     .m_axis_tvalid(rx_to_fifo_valid),
     .m_axis_tready(fifo_to_rx_ready),
@@ -53,8 +52,8 @@ uart_rx #(.DATA_WIDTH(8)) uart_rx_inst (
     .prescale(16'd35)
 );
 
-axis_fifo #(
-    .DEPTH(64),
+axis_pipeline_fifo #(
+    .LENGTH(4),
     .DATA_WIDTH(8),
     .KEEP_ENABLE(0),
     .LAST_ENABLE(0),
@@ -63,7 +62,7 @@ axis_fifo #(
     .USER_ENABLE(0)
 ) rx_to_sipo_fifo_inst (
     .clk(clk_i),
-    .rst(!resetn_i),
+    .rst(reset_i),
 
     // The signals you care about
     .s_axis_tdata(rx_to_fifo_data),
@@ -78,13 +77,12 @@ axis_fifo #(
     .s_axis_tlast(0),
     .s_axis_tid(0),
     .s_axis_tdest(0),
-    .s_axis_tuser(0),
-    .pause_req(0)
+    .s_axis_tuser(0)
 );
 
 sipo_8_to_32 sipo_inst (
     .clk_i(clk_i),
-    .resetn_i(!resetn_i),
+    .resetn_i(!reset_i),
     .data_i(fifo_to_sipo_data),
     .valid_i(fifo_to_sipo_valid),
     .ready_o(sipo_to_fifo_ready),
@@ -93,8 +91,8 @@ sipo_8_to_32 sipo_inst (
     .ready_i(fifo_to_sipo_ready)
 );
 
-axis_fifo #(
-    .DEPTH(64),
+axis_pipeline_fifo #(
+    .LENGTH(4),
     .DATA_WIDTH(32),
     .KEEP_ENABLE(0),
     .LAST_ENABLE(0),
@@ -102,8 +100,8 @@ axis_fifo #(
     .DEST_ENABLE(0),
     .USER_ENABLE(0)
 ) sipo_to_core_fifo_inst (
-    .clk(clk),
-    .rst(rst),
+    .clk(clk_i),
+    .rst(reset_i),
 
     // The signals you care about
     .s_axis_tdata(sipo_to_fifo_data),
@@ -118,13 +116,12 @@ axis_fifo #(
     .s_axis_tlast(0),
     .s_axis_tid(0),
     .s_axis_tdest(0),
-    .s_axis_tuser(0),
-    .pause_req(0)
+    .s_axis_tuser(0)
 );
 
 bitonic_sorter_core core_inst (
     .clk_i(clk_i),
-    .resetn_i(resetn_i),
+    .resetn_i(!reset_i),
     //Inputs
     .descend_i(sw),
     .packet_valid_i(fifo_to_core_valid),
@@ -136,8 +133,8 @@ bitonic_sorter_core core_inst (
     .data_o(core_to_fifo_data)
 );
 
-axis_fifo #(
-    .DEPTH(64),
+axis_pipeline_fifo #(
+    .LENGTH(4),
     .DATA_WIDTH(32),
     .KEEP_ENABLE(0),
     .LAST_ENABLE(0),
@@ -146,7 +143,7 @@ axis_fifo #(
     .USER_ENABLE(0)
 ) core_to_piso_fifo_inst (
     .clk(clk_i),
-    .rst(!resetn_i),
+    .rst(reset_i),
 
     // The signals you care about
     .s_axis_tdata(core_to_fifo_data),
@@ -161,13 +158,12 @@ axis_fifo #(
     .s_axis_tlast(0),
     .s_axis_tid(0),
     .s_axis_tdest(0),
-    .s_axis_tuser(0),
-    .pause_req(0)
+    .s_axis_tuser(0)
 );
 
 piso_32_to_8 piso_inst (
     .clk_i(clk_i),
-    .resetn_i(resetn_i),
+    .resetn_i(!reset_i),
     .data_i(fifo_to_piso_data),
     .valid_i(fifo_to_piso_valid),
     .ready_o(piso_to_fifo_ready),
@@ -176,8 +172,8 @@ piso_32_to_8 piso_inst (
     .ready_i(fifo_to_piso_ready)
 );
 
-axis_fifo #(
-    .DEPTH(64),
+axis_pipeline_fifo #(
+    .LENGTH(4),
     .DATA_WIDTH(8),
     .KEEP_ENABLE(0),
     .LAST_ENABLE(0),
@@ -186,12 +182,12 @@ axis_fifo #(
     .USER_ENABLE(0)
 ) piso_to_tx_fifo_inst (
     .clk(clk_i),
-    .rst(!resetn_i),
+    .rst(reset_i),
 
     // The signals you care about
     .s_axis_tdata(piso_to_fifo_data),
     .s_axis_tvalid(piso_to_fifo_valid),
-    .s_axis_tready(fifo_to_tx_ready),
+    .s_axis_tready(fifo_to_piso_ready),
 
     .m_axis_tdata(fifo_to_tx_data),
     .m_axis_tvalid(fifo_to_tx_valid),
@@ -201,15 +197,14 @@ axis_fifo #(
     .s_axis_tlast(0),
     .s_axis_tid(0),
     .s_axis_tdest(0),
-    .s_axis_tuser(0),
-    .pause_req(0)
+    .s_axis_tuser(0)
 );
 
 uart_tx #(.DATA_WIDTH(8)) uart_tx_inst (
     .clk(clk_i),
-    .rst(!reset_i),
+    .rst(reset_i),
     .s_axis_tdata(fifo_to_tx_data), // input
-    .s_axis_tvalid(fifo_to_core_valid), // input
+    .s_axis_tvalid(fifo_to_tx_valid), // input
     .s_axis_tready(tx_to_fifo_ready), // output
     .txd(tx_o),
     .busy(),
