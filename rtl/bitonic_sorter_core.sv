@@ -234,6 +234,9 @@ always_comb begin : next_state_logic
             //if the array size is good but not 16 just echo out the array
             w_v_li_d = 0;
             sorter_start = 0;
+            sorter_counter_inc = 1;
+            state_d = transmit_left_bracket;
+            /* just echo
             if(array_size_q != 32'd16) begin
                 state_d = transmit_left_bracket;
             end else if(sorter_done_q) begin
@@ -241,6 +244,7 @@ always_comb begin : next_state_logic
                 w_v_li_d = 1;
                 sorter_counter_inc = 1;
             end
+            */
         end
 
         write_back: begin
