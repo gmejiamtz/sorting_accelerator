@@ -69,7 +69,7 @@ endtask
 task automatic check_header(input [31:0] packet_i, output logic result_o);
     begin
         @(negedge clk_i);
-        ready_i = 0;
+        ready_i = 1;
         if (uut.state_q != idle) begin
             $display("check_header task expects core to be in idle state");
             result_o = '1;
@@ -112,7 +112,7 @@ endtask
 task automatic check_size(input [31:0] packet_i, output logic result_o);
     begin
         @(negedge clk_i);
-        ready_i = 0;
+        ready_i = 1;
         if (uut.state_q != size) begin
             $display("check_size task expects core to be in size state");
             result_o = '1;
@@ -211,14 +211,21 @@ task automatic run_sorter(output logic result_o);
     begin
         @(negedge clk_i)
         result_o = 0;
+        ready_i = 1;
         if(uut.state_q != sort) begin
             $display("run_sorter task expects core to be in sort state, it is at state %b", uut.state_q);
             result_o = '1;
         end else begin
-            $display("Sorter STATE TBA");
-            @(posedge clk_i);
+            repeat (100) begin
+                @(posedge clk_i);
+            end
+            if(uut.state_q == error) begin
+                $display("run_sorter timed out!!! FAIL!!! %b", uut.state_q);
+                result_o = 1;
+            end
         end
         @(negedge clk_i);
+        ready_i = 0;
         packet_data_i = '0;
         packet_valid_i = '0;
     end
@@ -287,7 +294,6 @@ initial begin
         $finish;
     end
     $display("Testing Bad headers");
-    wait(uut.state_q == idle);
     check_header(32'h0, task_result);
     if(task_result) begin
         $display("An incorrect header was read as correct, FAILED!");
