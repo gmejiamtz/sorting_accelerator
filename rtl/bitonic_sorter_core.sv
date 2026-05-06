@@ -29,11 +29,19 @@ logic [31:0] array_size_q, array_size_d;
 logic size_valid_l;
 
 //BRAM signals
-logic [addr_width_lp-1:0] w_addr_li, r_addr_li;
-logic [data_width_lp-1:0] w_data_li, r_data_lo;
-logic                     w_v_li, r_v_li;   //BRAM read enable and write enable
-logic                     w_v_li_q, r_v_li_q;   //BRAM read enable and write enable
-logic                     w_v_li_d, r_v_li_d;   //BRAM read enable and write enable
+//Port A
+logic [addr_width_lp-1:0] w_addr_a_li, r_addr_a_li;
+logic [data_width_lp-1:0] w_data_a_li, r_data_a_lo;
+logic                     w_v_a_li, r_v_a_li;   //BRAM read enable and write enable
+logic                     w_v_a_li_q, r_v_a_li_q;   //BRAM read enable and write enable
+logic                     w_v_a_li_d, r_v_a_li_d;   //BRAM read enable and write enable
+
+//Port B
+logic [addr_width_lp-1:0] w_addr_b_li, r_addr_b_li;
+logic [data_width_lp-1:0] w_data_b_li, r_data_b_lo;
+logic                     w_v_b_li, r_v_b_li;   //BRAM read enable and write enable
+logic                     w_v_b_li_q, r_v_b_li_q;   //BRAM read enable and write enable
+logic                     w_v_b_li_d, r_v_b_li_d;   //BRAM read enable and write enable
 
 logic clear_addr;
 
@@ -91,17 +99,21 @@ end
 
 always_ff @(posedge clk_i) begin : bram_read_en
     if(!resetn_i) begin
-        r_v_li_q <= '0;
+        r_v_a_li_q <= '0;
+        r_v_b_li_q <= '0;
     end else begin
-        r_v_li_q <= r_v_li_d;
+        r_v_a_li_q <= r_v_a_li_d;
+        r_v_b_li_q <= r_v_b_li_d;
     end
 end
 
 always_ff @(posedge clk_i) begin : bram_write_en
     if(!resetn_i) begin
-        w_v_li_q <= '0;
+        w_v_a_li_q <= '0;
+        w_v_b_li_q <= '0;
     end else begin
-        w_v_li_q <= w_v_li_d;
+        w_v_a_li_q <= w_v_a_li_d;
+        w_v_b_li_q <= w_v_b_li_d;
     end
 end
 
@@ -116,8 +128,10 @@ always_comb begin : next_state_logic
     //defaults of intermiate logic busses
     error_code_d = error_code_q;
     array_size_d = array_size_q;
-    r_v_li_d = '0;
-    w_v_li_d = 0;
+    r_v_a_li_d = '0;
+    w_v_a_li_d = 0;
+    r_v_b_li_d = '0;
+    w_v_b_li_d = 0;
     clear_addr = '0;
     case (state_q)
         idle: begin
@@ -155,9 +169,9 @@ always_comb begin : next_state_logic
         end
 
         load: begin
-            w_v_li_d = sipo_full;
+            w_v_a_li_d = sipo_full;
             //if wrote to last cache line move to sort state on next state
-            if({15'b0,w_addr_li} == array_size_q[31:4]) begin
+            if({15'b0,w_addr_a_li} == array_size_q[31:4]) begin
                 state_d = sort;
                 timer_reset = '1;
                 clear_addr = '1;
@@ -188,7 +202,7 @@ always_comb begin : next_state_logic
             end else if (ready_i & valid_o) begin
                 //read the bram
                 timer_inc = '1;
-                r_v_li_d = '1;
+                r_v_a_li_d = '1;
                 valid_d = 0;
                 state_d = bram_read;
                 timer_reset = 1;
@@ -200,7 +214,7 @@ always_comb begin : next_state_logic
             valid_d = '0;
             data_d = '0;
             timer_inc = 1;
-            r_v_li_d = 0;
+            r_v_a_li_d = 0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
@@ -216,7 +230,7 @@ always_comb begin : next_state_logic
             valid_d = '0;
             data_d = '0;
             timer_inc = 1;
-            r_v_li_d = 0;
+            r_v_a_li_d = 0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
@@ -232,7 +246,7 @@ always_comb begin : next_state_logic
             valid_d = piso_valid;
             data_d = piso_data_out;
             timer_inc = '1;
-            r_v_li_d = '0;
+            r_v_a_li_d = '0;
             if(timer_count == timeout_cycle_count) begin
                 state_d = error;
                 error_code_d = error_code_timeout;
@@ -252,17 +266,17 @@ always_comb begin : next_state_logic
                 error_code_d = error_code_timeout;
             end else if(piso_empty & ready_i & valid_o) begin //if PISO is empty refill the cache line by reading from BRAMn
                 //if you cant read anymore just do the ending string and go to idle
-                if({15'b0,r_addr_li} == (array_size_q[31:4])) begin
-                    r_v_li_d = 0;
+                if({15'b0,r_addr_a_li} == (array_size_q[31:4])) begin
+                    r_v_a_li_d = 0;
                     data_d = right_bracket_string;
                     state_d = idle;
                 end else begin  //go back to read bram
                     data_d = comma_string;
-                    r_v_li_d = 1;
+                    r_v_a_li_d = 1;
                     state_d = bram_read;
                 end
             end else if (!piso_empty & ready_i & valid_o) begin //if no timeout and not empty then just send comma and go back to sending ints
-                    r_v_li_d = '0;
+                    r_v_a_li_d = '0;
                     data_d = comma_string;
                     state_d = transmit_raw_int;
             end
@@ -312,9 +326,9 @@ bsg_counter_up_down #(
 ) write_addr_counter (
     .clk_i(clk_i),
     .reset_i(!resetn_i | clear_addr),
-    .up_i(w_v_li),
+    .up_i(w_v_a_li),
     .down_i(1'b0),
-    .count_o(w_addr_li)
+    .count_o(w_addr_a_li)
 );
 
 bsg_counter_up_down #(
@@ -326,11 +340,11 @@ bsg_counter_up_down #(
     ,.reset_i(!resetn_i | clear_addr)
 
     // Control Signals
-    ,.up_i(r_v_li)
+    ,.up_i(r_v_a_li)
     ,.down_i(1'b0)
     
     // Counter Output
-    ,.count_o(r_addr_li)
+    ,.count_o(r_addr_a_li)
 );
 
 bsg_counter_up_down #(
@@ -345,20 +359,24 @@ bsg_counter_up_down #(
     .count_o(timer_count)
 );
 
-bsg_mem_1r1w_sync #(
+bsg_mem_2rw_sync #(
     .width_p(data_width_lp),
     .els_p (memory_size_lp)
 ) sorter_bram (
     .clk_i  (clk_i),
     .reset_i(!resetn_i),
-
-    .w_v_i   (w_v_li),       // Pulse when a 512-bit vector is ready
-    .w_addr_i(w_addr_li),     // 0 to 4095
-    .w_data_i(w_data_li),     // Concatenated 16 integers
-
-    .r_v_i   (r_v_li),       // Read enable
-    .r_addr_i(r_addr_li),     // 0 to 4095
-    .r_data_o(r_data_lo)     // Valid 1 cycle AFTER r_v_li is high
+    //FSM and Sorter Core
+    .a_addr_i(r_addr_a_li),
+    .a_data_i(w_data_a_li),
+    .a_data_o(r_data_a_lo),
+    .a_v_i(r_v_a_li),
+    .a_w_i(w_v_a_li),
+    //sorter core only
+    .b_addr_i(r_addr_b_li),
+    .b_data_i(w_data_b_li),
+    .b_data_o(r_data_b_lo),
+    .b_v_i(r_v_b_li),
+    .b_w_i(w_v_b_li)
 );
 
 //Creates the w_data for the bram
@@ -368,7 +386,7 @@ sipo_32_to_512 sipo_inst (
     .data_i(packet_data_i),
     .valid_i(packet_valid_i & (state_q == load)),
     .ready_o(sipo_empty),
-    .data_o(w_data_li),
+    .data_o(w_data_a_li),
     .valid_o(sipo_full),
     .ready_i(1'b1)  //bram always ready
 );
@@ -377,7 +395,7 @@ sipo_32_to_512 sipo_inst (
 piso_512_to_32 piso_inst (
     .clk_i(clk_i),
     .resetn_i(resetn_i & !clear_addr),
-    .data_i(r_data_lo),
+    .data_i(r_data_a_lo),
     .valid_i(state_q == bram_data_valid),
     .ready_o(piso_empty),
     .data_o(piso_data_out),
@@ -390,7 +408,9 @@ piso_512_to_32 piso_inst (
 assign data_o = data_q;
 assign packet_ready_o = ready_q;
 assign valid_o = valid_q;
-assign w_v_li = w_v_li_d;
-assign r_v_li = r_v_li_q;
+assign w_v_a_li = w_v_a_li_d;
+assign w_v_b_li = w_v_b_li_d;
+assign r_v_a_li = r_v_a_li_q;
+assign r_v_b_li = r_v_b_li_q;
 
 endmodule

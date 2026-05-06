@@ -7,8 +7,8 @@
 -I${PICORV32_DIR}
 
 ${BASEJUMP_STL_DIR}/bsg_misc/bsg_counter_up_down.sv
-${BASEJUMP_STL_DIR}/bsg_mem/bsg_mem_1r1w_sync.sv
-${BASEJUMP_STL_DIR}/bsg_mem/bsg_mem_1r1w_sync_synth.sv
+${BASEJUMP_STL_DIR}/bsg_mem/bsg_mem_2rw_sync.sv
+${BASEJUMP_STL_DIR}/bsg_mem/bsg_mem_2rw_sync_synth.sv
 ${ALEXFORENCICH_UART_DIR}/rtl/uart_rx.v
 ${ALEXFORENCICH_UART_DIR}/rtl/uart_tx.v
 ${ALEXFORENCICH_UART_DIR}/rtl/uart.v
