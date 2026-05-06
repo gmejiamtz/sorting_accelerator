@@ -1,12 +1,12 @@
-module piso_512_to_32 (
+module piso_32_to_8 (
     input clk_i,
     input resetn_i,
     
-    input [511:0] data_i,
+    input [31:0] data_i,
     input         valid_i,     // Pulse to capture BRAM output
     output        ready_o,    // High when 16 words have been sent
     
-    output [31:0] data_o,
+    output [7:0] data_o,
     output        valid_o,
     input         ready_i
 );
@@ -19,9 +19,9 @@ typedef enum logic [0:0] {
 state_t state_d, state_q;
 logic ready_d, ready_q;
 logic valid_d, valid_q;
-logic [31:0] data_d, data_q;
-logic [511:0] cache_line_d, cache_line_q;
-logic [4:0] shift_count;
+logic [7:0] data_d, data_q;
+logic [31:0] cache_line_d, cache_line_q;
+logic [1:0] shift_count;
 logic reset_counter;
 logic inc_counter;
 
@@ -93,11 +93,11 @@ always_comb begin
             reset_counter = 0;
             ready_d = 0;
             valid_d = 1;
-            data_d = cache_line_q[511:480];
+            data_d = cache_line_q[31:24];
             if(ready_i & valid_o) begin
                 inc_counter = 1;
-                cache_line_d = {cache_line_q[479:0], 32'h0};
-                if(shift_count == 5'd15) begin
+                cache_line_d = {cache_line_q[23:0], 8'h0};
+                if(shift_count == 2'd3) begin
                     state_d = idle;
                     valid_d = 0;
                     ready_d = 1;
@@ -109,7 +109,7 @@ always_comb begin
 end
 
 bsg_counter_up_down #(
-    .max_val_p(16),
+    .max_val_p(4),
     .init_val_p(0),
     .max_step_p(1)
 ) piso_counter (

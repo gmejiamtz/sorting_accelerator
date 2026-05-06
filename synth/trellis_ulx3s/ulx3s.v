@@ -7,7 +7,8 @@ module ulx3s (
     input wire clk_25mhz,  // Main clock input (25MHz)
     input wire reset_ni,
     output wire ftdi_rxd,
-    output reg [7:0] led,
+    output wire ftdi_txd,
+    input wire sw
 );
 
 wire clk;
@@ -48,6 +49,6 @@ EHXPLLL #(
         .LOCK(locked)
 	);
 
-top top_inst (.clk_i(clk), .reset_i(!reset_ni), .tx_o(ftdi_rxd),.led(led));
+top top_inst (.clk_i(clk), .reset_i(!reset_ni), .tx_o(ftdi_rxd),.rx_i(ftdi_txd),.sw(sw));
 
 endmodule
