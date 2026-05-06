@@ -6,7 +6,7 @@ typedef enum logic [3:0] {
     idle,
     size,
     load,
-    sort,
+    sort,   
     write_back,
     write_back_done,    //if the sorter is done done
     transmit_left_bracket,

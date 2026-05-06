@@ -246,26 +246,9 @@ always_comb begin : next_state_logic
             if(end_of_sort_q) begin
                 clear_r_addr = 1;
                 clear_w_addr = 1;
-            end
-            state_d = bram_read;
-        end
-
-        transmit_left_bracket: begin //stay here for one cycle to send out the starting array sequence
-            ready_d = '0;
-            valid_d = '1;
-            data_d = left_bracket_string; 
-            if(timer_count == timeout_cycle_count) begin
-                state_d = error;
-                error_code_d = error_code_timeout;
-                timer_reset = 1;
-                valid_d = 0;
-            end else if (ready_i & valid_o) begin
-                //read the bram
-                timer_inc = '1;
-                //r_v_li_d = '1;
-                valid_d = 0;
+                state_d = transmit_left_bracket;
+            end else begin
                 state_d = bram_read;
-                timer_reset = 1;
             end
         end
 
@@ -287,7 +270,7 @@ always_comb begin : next_state_logic
 
         bram_data_valid: begin
             ready_d = '0;
-            valid_d = '1;
+            valid_d = '0;
             data_d = '0;
             timer_inc = 1;
             r_v_li_d = 0;
@@ -302,6 +285,25 @@ always_comb begin : next_state_logic
             end else begin
                 state_d = transmit_raw_int;  //data is to be sent by the PISO
                 piso_start_d = 1;             //piso should start
+                timer_reset = 1;
+            end
+        end
+
+        transmit_left_bracket: begin //stay here for one cycle to send out the starting array sequence
+            ready_d = '0;
+            valid_d = '1;
+            data_d = left_bracket_string; 
+            if(timer_count == timeout_cycle_count) begin
+                state_d = error;
+                error_code_d = error_code_timeout;
+                timer_reset = 1;
+                valid_d = 0;
+            end else if (ready_i & valid_o) begin
+                //read the bram
+                timer_inc = '1;
+                //r_v_li_d = '1;
+                valid_d = 0;
+                state_d = bram_read;
                 timer_reset = 1;
             end
         end
